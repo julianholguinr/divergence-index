@@ -103,10 +103,12 @@ st.markdown("""
     .stTabs [data-baseweb="tab"] {padding: 10px 24px; font-weight: 600; font-size: 14px;}
     h1 {font-size: 1.8rem !important;}
     .explanation {
-        background: #f0f7ff; border-left: 4px solid #3498db;
-        padding: 12px 16px; border-radius: 0 8px 8px 0;
-        margin-bottom: 16px; font-size: 14px; line-height: 1.6;
+        background: #1a1a2e; border-left: 4px solid #3498db;
+        padding: 14px 18px; border-radius: 0 8px 8px 0;
+        margin-bottom: 16px; font-size: 14px; line-height: 1.7;
+        color: #e0e0e0; border: 1px solid #2a2a4a;
     }
+    .explanation b {color: #5dade2;}
     .risk-card {
         padding: 20px; border-radius: 12px; text-align: center;
         border: 2px solid #e9ecef; background: #fff;
