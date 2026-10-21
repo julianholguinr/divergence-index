@@ -568,8 +568,8 @@ with tab2:
             height=max(280, 160 + len(groups_for_hm) * 70),
             margin=dict(l=120, r=20, t=10, b=140),
             font=dict(size=12, family="Inter, sans-serif"), paper_bgcolor="white", plot_bgcolor="white",
-            xaxis=dict(tickangle=-45, side="bottom", tickfont=dict(size=13, color="#2C3E50", family="Inter, sans-serif")),
-            yaxis=dict(autorange="reversed", tickfont=dict(size=14, color="#2C3E50", family="Inter, sans-serif", weight="bold")),
+            xaxis=dict(tickangle=-45, side="bottom", tickfont=dict(size=13, color="black", family="Inter, sans-serif")),
+            yaxis=dict(autorange="reversed", tickfont=dict(size=14, color="black", family="Inter, sans-serif")),
         )
         st.plotly_chart(fig_hm, use_container_width=True, config=CHART_CONFIG)
 
