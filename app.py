@@ -152,7 +152,7 @@ CHART_CONFIG = {
     "modeBarButtonsToAdd": ["resetScale2d"],
     "modeBarButtonsToRemove": ["lasso2d", "select2d", "autoScale2d"],
     "displaylogo": False,
-    "scrollZoom": True,
+    "scrollZoom": False,
     "toImageButtonOptions": {"format": "png", "width": 1200, "height": 600, "scale": 2},
 }
 
@@ -168,14 +168,17 @@ def styled(fig, h=500):
             font=dict(size=12, color="black"),
         ),
         hovermode="x unified",
-        dragmode="pan",
+        dragmode="zoom",
+        transition=dict(duration=300, easing="cubic-in-out"),
         modebar=dict(bgcolor="rgba(255,255,255,0.8)", color="#6c757d",
                      activecolor="#3498DB", orientation="h"),
     )
     fig.update_xaxes(gridcolor="#F0F0F0", linecolor="#CED4DA", dtick=1,
                      rangeslider=dict(visible=False), fixedrange=False,
+                     constrain="domain", constraintoward="center",
                      tickfont=dict(color="black", size=12), title_font=dict(color="black"))
     fig.update_yaxes(gridcolor="#F0F0F0", linecolor="#CED4DA", fixedrange=False,
+                     rangemode="tozero", constrain="domain", constraintoward="bottom",
                      tickfont=dict(color="black", size=12), title_font=dict(color="black"))
     return fig
 
