@@ -123,7 +123,7 @@ DISCRETIONARY = [
     "new_vehicles", "used_vehicles", "public_transit",
 ]
 
-# ── Hypothetical Bank Data (from case document — Crossroads Community Bank) ──
+# ── Hypothetical Bank Data (from case document — Crossroads Regional Bank) ──
 BANK_DATA = {
     2021: {
         "total_retail_deposits": 1_200_000_000,

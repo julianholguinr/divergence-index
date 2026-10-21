@@ -136,8 +136,20 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
+def _data_hash():
+    """Hash of processed data files so cache busts when data changes."""
+    import hashlib
+    h = hashlib.md5()
+    for p in sorted(PROCESSED.glob("*.csv")):
+        h.update(p.read_bytes())
+    pivot = RAW / "cpi_annual_pivot.csv"
+    if pivot.exists():
+        h.update(pivot.read_bytes())
+    return h.hexdigest()
+
+
 @st.cache_data
-def load_data():
+def load_data(_hash=None):
     return {
         "di": pd.read_csv(PROCESSED / "divergence_index.csv"),
         "cum": pd.read_csv(PROCESSED / "cumulative_inflation.csv"),
@@ -199,31 +211,41 @@ def add_timeline_annotations(fig, years):
     return fig
 
 
-def compute_risk_score(group, di_df, burden_df):
-    """(#7) Compute a 1-10 credit risk score for a group."""
-    scores = []
+def compute_risk_score(group, di_df, burden_df, detail=False):
+    """Compute a 1-10 credit risk score for a group.
+
+    Components:
+      A = |divergence| × 1.5  (latest year, capped at 10)
+      B = (burden% - 50) / 4  (latest year, capped at 10)
+      C = burden_shift × 1.2  (2021→latest, capped at 10)
+      D = peak_inflation / 2  (any year, capped at 10)
+      Final = mean(A, B, C, D)
+    """
+    components = {}
     latest = di_df[di_df["year"] == di_df["year"].max()]
     row = latest[latest["group"] == group]
     if not row.empty:
         div = abs(row.iloc[0]["divergence"])
-        scores.append(min(10, div * 1.5))
+        components["A: Divergence (|gap|×1.5)"] = (div, min(10, div * 1.5))
 
     b = burden_df[(burden_df["group"] == group) & (burden_df["year"] == burden_df["year"].max())]
     if not b.empty:
         nd = b.iloc[0]["nondiscretionary_pct"]
-        scores.append(min(10, (nd - 50) / 4))
+        components["B: Burden level ((nd%-50)/4)"] = (nd, min(10, (nd - 50) / 4))
 
     b21 = burden_df[(burden_df["group"] == group) & (burden_df["year"] == 2021)]
     if not b.empty and not b21.empty:
         shift = b.iloc[0]["nondiscretionary_pct"] - b21.iloc[0]["nondiscretionary_pct"]
-        scores.append(min(10, shift * 1.2))
+        components["C: Burden shift (Δpp×1.2)"] = (shift, min(10, shift * 1.2))
 
-    cum = di_df[di_df["group"] == group]["group_inflation"]
-    if len(cum) > 0:
-        peak = cum.max()
-        scores.append(min(10, peak / 2))
+    peak = di_df[di_df["group"] == group]["group_inflation"].max() if len(di_df[di_df["group"] == group]) > 0 else 0
+    components["D: Peak inflation (peak/2)"] = (peak, min(10, peak / 2))
 
-    return round(np.mean(scores), 1) if scores else 5.0
+    scores = [v for _, v in components.values()]
+    final = round(np.mean(scores), 1) if scores else 5.0
+    if detail:
+        return final, components
+    return final
 
 
 def generate_pdf_report(di_df, burden_df, cum_df):
@@ -271,7 +293,7 @@ def generate_pdf_report(di_df, burden_df, cum_df):
 
 
 # ── Load data ──
-data = load_data()
+data = load_data(_hash=_data_hash())
 di, cum, burden = data["di"], data["cum"], data["burden"]
 
 # ── Sidebar ──
@@ -643,19 +665,20 @@ with tab3:
             fig_d = go.Figure(data=[go.Pie(
                 labels=show_labels, values=show_vals,
                 hole=0.45, marker=dict(colors=show_colors, line=dict(color="white", width=2)),
-                textinfo="label+percent", textposition="inside",
+                textinfo="label+percent", textposition="auto",
                 insidetextfont=dict(size=10, color="white"),
+                outsidetextfont=dict(size=9, color="black"),
                 hovertemplate="<b>%{label}</b><br>%{value:.1f}% of spending<extra></extra>",
                 sort=False,
             )])
             ess_pct = sum(weights[c] * 100 for c in cats if c in NON_DISCRETIONARY)
             fig_d.update_layout(
-                height=370, margin=dict(l=5, r=5, t=50, b=5),
+                height=400, margin=dict(l=30, r=30, t=50, b=30),
                 title=dict(text=SHORT[group], font=dict(size=15, color=COLORS[group]), x=0.5, y=0.97),
                 showlegend=False, paper_bgcolor="white",
                 uniformtext=dict(minsize=7, mode="hide"),
-                annotations=[dict(text=f"<b>{ess_pct:.0f}%</b><br>essentials",
-                                  x=0.5, y=0.5, font=dict(size=13, color="#E74C3C"), showarrow=False)],
+                annotations=[dict(text=f"<b>{ess_pct:.0f}%</b><br>of spend<br>= essentials",
+                                  x=0.5, y=0.5, font=dict(size=11, color="#E74C3C"), showarrow=False)],
             )
             st.plotly_chart(fig_d, use_container_width=True, config=CHART_CONFIG)
 
@@ -695,11 +718,11 @@ with tab4:
         st.markdown(
             '<div class="explanation">'
             "<b>Deliverable 2: Non-Discretionary Burden — Our Strongest Finding.</b> "
-            "Even though cumulative price inflation converges near the CPI average by 2025, "
-            "the real squeeze is <b>prices vs. income</b>. This shows what percentage of each group's income "
-            "goes to essentials they MUST pay for. Prices never came back down — they just stopped rising as fast. "
-            "Meanwhile, Social Security COLAs for Seniors lagged behind in 2021-2022, and fixed pensions didn't adjust at all. "
-            "Above the red 80% line = serious financial stress."
+            "Even though cumulative price inflation converges near the Midwest CPI average by 2025, "
+            "the real squeeze is <b>prices vs. income</b>. This shows what <b>% of income</b> goes to "
+            "essentials they MUST pay for (not to be confused with % of spending in the donut charts). "
+            "Prices never came back down — they just stopped rising as fast. "
+            "Meanwhile, Social Security COLAs for Seniors lagged behind in 2021-2022, and fixed pensions didn't adjust at all."
             "</div>", unsafe_allow_html=True,
         )
 
@@ -898,29 +921,35 @@ with tab6:
 
     st.divider()
     st.markdown("#### How the score is calculated")
+    if show_explanations:
+        st.markdown(
+            '<div class="explanation">'
+            "Each component uses a raw input value, applies a scaling formula, and produces a 0-10 sub-score. "
+            "The final score is the **mean** of all four sub-scores. "
+            "The table below shows both the raw input and the resulting sub-score so judges can reproduce every number."
+            "</div>", unsafe_allow_html=True,
+        )
     score_df_rows = []
     for group in selected_groups:
-        latest = di[di["year"] == di["year"].max()]
-        row = latest[latest["group"] == group]
-        b_latest = burden[(burden["group"] == group) & (burden["year"] == burden["year"].max())]
-        b21 = burden[(burden["group"] == group) & (burden["year"] == 2021)]
-
-        divergence = abs(row.iloc[0]["divergence"]) if not row.empty else 0
-        nd_pct = b_latest.iloc[0]["nondiscretionary_pct"] if not b_latest.empty else 0
-        shift = (b_latest.iloc[0]["nondiscretionary_pct"] - b21.iloc[0]["nondiscretionary_pct"]) if (not b_latest.empty and not b21.empty) else 0
-        peak = di[di["group"] == group]["group_inflation"].max()
-
-        score_df_rows.append({
-            "Group": SHORT[group],
-            "Divergence (|gap|)": f"{divergence:.1f}pp",
-            "Burden Level": f"{nd_pct:.1f}%",
-            "Burden Shift": f"+{shift:.1f}pp",
-            "Peak Inflation": f"{peak:+.1f}%",
-            "Final Score": f"{compute_risk_score(group, di, burden)}/10",
-        })
+        final, comps = compute_risk_score(group, di, burden, detail=True)
+        row = {"Group": SHORT[group]}
+        for label, (raw, scaled) in comps.items():
+            short_label = label.split(": ", 1)[1] if ": " in label else label
+            row[short_label] = f"{raw:.1f} → {scaled:.1f}"
+        row["Final Score"] = f"{final}/10"
+        score_df_rows.append(row)
     st.dataframe(pd.DataFrame(score_df_rows), use_container_width=True, hide_index=True)
 
-    st.markdown('<div class="data-source">Score = average of: divergence impact (x1.5), burden severity ((burden-50)/4), burden shift (x1.2), peak exposure (peak/2). Capped at 10.</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="data-source">'
+        "Each cell shows <b>raw input → sub-score (0-10)</b>. "
+        "A: |latest year divergence| × 1.5 &nbsp;|&nbsp; "
+        "B: (burden% − 50) ÷ 4 &nbsp;|&nbsp; "
+        "C: burden shift (pp) × 1.2 &nbsp;|&nbsp; "
+        "D: peak YoY inflation ÷ 2. "
+        "All capped at 10. Final = mean(A,B,C,D)."
+        "</div>", unsafe_allow_html=True,
+    )
 
 # ════════════════════════════════════════════════════════════════
 # TAB 7 — BANK IMPACT
@@ -1059,7 +1088,7 @@ with tab7:
             - Community banks have a duty to serve underbanked populations, not just manage risk
             - Transparency: customers should understand how their creditworthiness is assessed
 
-            **SWOT Analysis — Crossroads Community Bank**
+            **SWOT Analysis — Crossroads Regional Bank**
 
             | | **Helpful** | **Harmful** |
             |---|---|---|
@@ -1089,8 +1118,8 @@ with tab8:
             <span class="slide-num">1</span> <b style="font-size:18px;">The Problem: One Number Can't Describe Everyone</b>
             <hr style="margin:12px 0;">
             <p style="font-size:16px; line-height:1.7;">
-            The government says inflation was <b>+8.0% in 2022</b>. But that's an <i>average</i>
-            across all Americans. A 70-year-old retiree spending 16% of their income on medical care
+            The Midwest CPI says inflation was <b>+8.0% in 2022</b>. But that's an <i>average</i>
+            across all Midwest urban consumers. A 70-year-old retiree spending 16% on medical care
             experiences a completely different inflation rate than a 25-year-old renter spending 27% on rent.
             </p>
             <p style="font-size:16px; line-height:1.7;">
