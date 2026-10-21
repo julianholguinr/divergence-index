@@ -72,7 +72,7 @@ TIMELINE_EVENTS = {
     ],
     2025: [
         ("2025", "Medical costs continue steady rise — seniors feel it most"),
-        ("2025", "Small biz delinquencies hit 3.2% (tripled from 2021)"),
+        ("2025", "Small biz delinquencies hit 3.2% (~2.9× from 2021)"),
     ],
 }
 
@@ -266,7 +266,7 @@ def generate_pdf_report(di_df, burden_df, cum_df):
     lines.append(f"  Card utilization: {b21['credit_card_utilization']*100:.0f}% -> {b25['credit_card_utilization']*100:.0f}%")
     lines.append(f"  Biz delinquencies: {b21['small_biz_delinquencies']*100:.1f}% -> {b25['small_biz_delinquencies']*100:.1f}%")
     lines.append("")
-    lines.append("Data sources: BLS CPI (CUSR0000SA*), FRED, BLS CEX, ACS")
+    lines.append("Data sources: BLS CPI-U Midwest (CUUR0200*), BLS CEX, ACS")
     return "\n".join(lines)
 
 
@@ -300,7 +300,7 @@ with st.sidebar:
 
     st.divider()
     show_headline = st.toggle("Show official CPI line", value=True,
-                              help="Gray dashed line = CPI-U, US City Average (national benchmark)")
+                              help="Gray dashed line = CPI-U, Midwest Urban (regional benchmark)")
     show_explanations = st.toggle("Show explanations", value=True,
                                   help="Toggle the blue explanation boxes on/off")
     show_events = st.toggle("Show timeline events", value=True,
@@ -323,8 +323,8 @@ with st.sidebar:
     if raw_file.exists():
         mod_time = datetime.fromtimestamp(raw_file.stat().st_mtime)
         st.caption(f"Data last pulled: {mod_time.strftime('%b %d, %Y %I:%M %p')}")
-    st.caption("Sources: BLS CPI-U (CUSR0000SA*), FRED, BLS CEX")
-    st.caption("Benchmark: CPI-U, US City Average, SA")
+    st.caption("Sources: BLS CPI-U Midwest (CUUR0200*), BLS CEX")
+    st.caption("Benchmark: CPI-U, Midwest Urban, NSA")
     st.caption("Period: 2021 - 2025 annual averages")
 
 if not selected_groups:
@@ -364,9 +364,9 @@ for yr in sorted(di_f["year"].unique()):
 cpi_total = (cpi_compound - 1) * 100
 cards_html += f'''
 <div class="kpi-card" style="border-left: 4px solid #95A5A6;">
-    <div class="label">CPI-U US City Avg (2021–{int(latest_yr)})</div>
+    <div class="label">CPI-U Midwest (2021–{int(latest_yr)})</div>
     <div class="value" style="color: #95A5A6;">+{cpi_total:.1f}%</div>
-    <div class="delta neutral">cumulative national benchmark</div>
+    <div class="delta neutral">cumulative Midwest benchmark</div>
 </div>'''
 cards_html += '</div>'
 st.markdown(cards_html, unsafe_allow_html=True)
@@ -391,13 +391,13 @@ with tab1:
         st.markdown(
             '<div class="explanation">'
             "<b>Deliverable 1: Personalized Inflation Rates.</b> "
-            "CPI is one number for everyone — but a retiree spending 26% on medical care, "
-            "a renter paying 28% on housing, and a farmer burning through diesel experience very different price pressures. "
+            "CPI is one number for everyone — but a retiree spending 16% on medical care, "
+            "a renter paying 28% on housing, and a farmer spending 10% on gasoline experience very different price pressures. "
             "We calculate a <b>weighted inflation rate</b> for three groups using real BLS CPI sub-indices "
             "and expenditure weights from the Consumer Expenditure Survey. "
             "The biggest divergence came in 2022 (+6.5pp for Rural Biz). Cumulatively, all groups end up near the CPI total — "
             "but <b>the real story is prices vs. income</b> (see Spending Squeeze tab). "
-            "Benchmark: CPI-U, US City Average (CUSR0000SA*)."
+            "Benchmark: CPI-U, Midwest Urban (CUUR0200SA0)."
             "</div>", unsafe_allow_html=True,
         )
 
@@ -410,9 +410,21 @@ with tab1:
             hl = di_f.drop_duplicates("year")[["year", "headline_cpi"]].dropna()
             fig.add_trace(go.Scatter(
                 x=hl["year"], y=hl["headline_cpi"],
-                mode="lines+markers", name="CPI-U (US City Avg)",
+                mode="lines+markers", name="CPI-U Midwest",
                 line=dict(color=COLORS["headline"], width=2, dash="dash"), marker=dict(size=6),
             ))
+            # National CPI comparison line
+            cpi_raw = data["cpi_raw"]
+            if cpi_raw is not None and "national_cpi" in cpi_raw.columns:
+                nat_yoy = cpi_raw["national_cpi"].pct_change() * 100
+                nat_yoy = nat_yoy.dropna()
+                nat_yoy = nat_yoy[(nat_yoy.index >= start_yr) & (nat_yoy.index <= end_yr)]
+                if not nat_yoy.empty:
+                    fig.add_trace(go.Scatter(
+                        x=nat_yoy.index, y=nat_yoy.values,
+                        mode="lines+markers", name="CPI-U National",
+                        line=dict(color="#8E44AD", width=2, dash="dot"), marker=dict(size=5),
+                    ))
         for group in selected_groups:
             gdf = di_f[di_f["group"] == group]
             fig.add_trace(go.Scatter(
@@ -474,8 +486,8 @@ with tab1:
     st.markdown(dollar_html, unsafe_allow_html=True)
 
     # (#10) Data source
-    st.markdown('<div class="data-source">Source: BLS CPI-U, US City Average, Seasonally Adjusted (CUSR0000SA*) | 2021-2025 annual averages. '
-                'Benchmark is national CPI-U. Group rates use national sub-indices weighted by demographic spending patterns from BLS CEX.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="data-source">Source: BLS CPI-U, Midwest Urban, Not Seasonally Adjusted (CUUR0200*) | 2021-2025 annual averages. '
+                'Benchmark is Midwest CPI-U headline. Group rates use Midwest sub-indices weighted by demographic spending patterns from BLS CEX.</div>', unsafe_allow_html=True)
 
     with st.expander("See the numbers in a table"):
         display_df = di_f[["year", "group", "group_inflation", "headline_cpi", "divergence"]].copy()
@@ -529,7 +541,8 @@ with tab2:
                                      value=int(di_f["year"].max()), key="hm_yr")
     cpi_yoy = data["cpi_yoy"]
     if heatmap_year in cpi_yoy.index:
-        cats = [c for c in cpi_yoy.columns if c != "all_items"]
+        excluded = {"all_items", "energy", "household_energy", "medical_services", "national_cpi"}
+        cats = [c for c in cpi_yoy.columns if c not in excluded]
         groups_for_hm = selected_groups
         z_values = []
         hover_text = []
@@ -637,8 +650,8 @@ with tab3:
             )])
             ess_pct = sum(weights[c] * 100 for c in cats if c in NON_DISCRETIONARY)
             fig_d.update_layout(
-                height=350, margin=dict(l=5, r=5, t=35, b=5),
-                title=dict(text=SHORT[group], font=dict(size=15, color=COLORS[group]), x=0.5),
+                height=370, margin=dict(l=5, r=5, t=50, b=5),
+                title=dict(text=SHORT[group], font=dict(size=15, color=COLORS[group]), x=0.5, y=0.97),
                 showlegend=False, paper_bgcolor="white",
                 uniformtext=dict(minsize=7, mode="hide"),
                 annotations=[dict(text=f"<b>{ess_pct:.0f}%</b><br>essentials",
@@ -761,10 +774,15 @@ with tab4:
                                  ), row=1, col=col_idx)
         fig.update_layout(barmode="stack")
         fig = styled(fig, h=460)
-        fig.update_yaxes(title_text="% of income", ticksuffix="%", row=1, col=1)
+        fig.update_yaxes(title_text="% of income", ticksuffix="%", range=[0, 110], row=1, col=1)
+        fig.add_hline(y=100, line_dash="dot", line_color="#95A5A6", line_width=1,
+                      annotation_text="100% of income", annotation_position="bottom right",
+                      annotation_font=dict(size=10, color="#95A5A6"))
         st.plotly_chart(fig, use_container_width=True, config=CHART_CONFIG)
+        st.caption("*If bars exceed 100%, tracked spending exceeds estimated income — group is likely drawing on savings or taking on debt. "
+                   "Weights cover only tracked CPI categories (~100% of CEX-mapped spending), so totals slightly above 100% reflect real cost pressure, not a data error.*")
 
-    st.markdown('<div class="data-source">Income: ACS estimates for Indiana | Burden: BLS CEX spending weights applied to CPI price changes</div>', unsafe_allow_html=True)
+    st.markdown('<div class="data-source">Income: ACS estimates for Indiana | Burden: BLS CEX spending weights applied to Midwest CPI price changes</div>', unsafe_allow_html=True)
 
 # ════════════════════════════════════════════════════════════════
 # TAB 5 — WHAT-IF SIMULATOR (#3)
@@ -783,7 +801,7 @@ with tab5:
     sc1, sc2, sc3 = st.columns(3)
     with sc1:
         sim_gas = st.slider("Gasoline price change (%)", -20, 40, 10, key="sim_gas")
-        sim_energy = st.slider("Energy price change (%)", -15, 30, 8, key="sim_energy")
+        sim_utilities = st.slider("Utilities (elec + gas) change (%)", -15, 30, 8, key="sim_energy")
     with sc2:
         sim_rent = st.slider("Rent price change (%)", -5, 20, 5, key="sim_rent")
         sim_food = st.slider("Grocery price change (%)", -5, 15, 3, key="sim_food")
@@ -792,10 +810,10 @@ with tab5:
         sim_other = st.slider("All other categories (%)", -5, 10, 2, key="sim_other")
 
     sim_changes = {
-        "gasoline": sim_gas, "energy": sim_energy, "rent": sim_rent,
-        "food_at_home": sim_food, "medical_care": sim_medical, "medical_services": sim_medical,
-        "owners_equiv_rent": sim_rent * 0.6, "household_energy": sim_energy * 0.8,
-        "electricity": sim_energy * 0.7, "utility_gas": sim_energy * 0.9,
+        "gasoline": sim_gas, "rent": sim_rent,
+        "food_at_home": sim_food, "medical_care": sim_medical,
+        "owners_equiv_rent": sim_rent * 0.6,
+        "electricity": sim_utilities * 0.7, "utility_gas": sim_utilities * 0.9,
         "food_away": sim_food * 0.8, "recreation": sim_other, "apparel": sim_other,
         "education_comm": sim_other, "new_vehicles": sim_other, "used_vehicles": sim_other,
         "public_transit": sim_other,
@@ -940,7 +958,7 @@ with tab7:
         <div class="kpi-card" style="border-left: 4px solid #9B59B6;">
             <div class="label">Small Biz Late Payments</div>
             <div class="value" style="color: #9B59B6;">{b21["small_biz_delinquencies"]*100:.1f}% &rarr; {b25["small_biz_delinquencies"]*100:.1f}%</div>
-            <div class="delta pos">tripled (3x increase)</div>
+            <div class="delta pos">nearly tripled (~2.9× increase)</div>
         </div>
     </div>'''
     st.markdown(bank_html, unsafe_allow_html=True)
@@ -968,7 +986,7 @@ with tab7:
 
         1. Energy prices spiked in 2022
         2. Rural businesses burned through cash
-        3. Small biz delinquencies **tripled**
+        3. Small biz delinquencies nearly tripled (~2.9×)
         4. Customers pulled **$150M** from deposits
         5. Card utilization: 29% to 41%
 
@@ -981,17 +999,18 @@ with tab7:
             st.markdown("""
             ### Divergence-Adjusted Credit Framework (DACF)
 
-            **Pillar 1 — Fix the risk models**
-            - Add demographic inflation exposure to credit scoring
-            - Flag portfolios concentrated in high-stress groups
+            **Pillar 1 — Fix the risk models (ECOA-compliant)**
+            - Incorporate cash-flow exposure indices (not demographics) into credit assessment
+            - Flag portfolios concentrated in high-stress spending profiles
+            - *Note: ECOA prohibits using age/demographics directly — use spending-pattern proxies instead*
 
             **Pillar 2 — Create products that match real needs**
 
             | Group | Their Problem | Product Solution |
             |-------|--------------|-----------------|
-            | **Seniors** | Medical = 26% of spending | Inflation-indexed CDs; prescription financing |
+            | **Seniors** | Medical = 16% of spending | Inflation-indexed CDs; prescription financing |
             | **Renters** | Rent = 28% of spending | Rent-smoothing accounts; homebuyer programs |
-            | **Rural Biz** | Energy costs doubled | Energy hedging; seasonal payment schedules |
+            | **Rural Biz** | Gasoline spiked +32% in 2022 | Energy hedging; seasonal payment schedules |
 
             **Pillar 3 — Stop the deposit bleeding ($150M lost)**
             - Seniors: guaranteed-rate CDs
@@ -1002,6 +1021,50 @@ with tab7:
             - Recover $60-90M in deposits
             - Cut auto loan losses by 15-20 bps
             - Stabilize biz delinquencies at 2.5%
+            """)
+
+        with st.expander("Stakeholder Analysis"):
+            st.markdown("""
+            | Stakeholder | Interest | Key Concern |
+            |-------------|----------|-------------|
+            | **Crossroads Exec Team** | Deposit retention, loan quality | Balancing growth with risk in inflation-stressed portfolios |
+            | **Fixed-Income Seniors** | Predictable returns, affordable healthcare | Erosion of purchasing power on fixed pensions; COLAs lag real costs |
+            | **Urban Renters** | Housing affordability, credit access | Rent consuming 27% of income; limited savings for emergencies |
+            | **Rural Small Biz Owners** | Operating cost stability, credit lines | Gasoline/vehicle costs volatile; seasonal cash-flow gaps |
+            | **Regulators / Policymakers** | Fair lending, community reinvestment | ECOA compliance; equitable access across demographics |
+            """)
+
+        with st.expander("Tradeoffs & Risk Mitigation"):
+            st.markdown("""
+            **Key tradeoffs in implementing the DACF:**
+
+            | Decision | Tradeoff | Mitigation |
+            |----------|----------|------------|
+            | Tighten credit for high-burden groups | Reduces default risk but may lose customers to competitors | Pair with targeted product offers to retain relationships |
+            | Inflation-indexed CDs for Seniors | Protects depositors but compresses bank margins | Cap index adjustments; fund via reduced marketing spend |
+            | Energy hedging for Rural Biz | Reduces biz volatility but adds operational complexity | Partner with regional energy cooperatives; limit to top 20% of exposures |
+            | Rent-smoothing accounts for Renters | Builds loyalty but creates contingent liability | Require 3-month deposit buffer; cap at $2K/month |
+
+            **Risk mitigation priorities:**
+            1. **Model risk** — Back-test spending-pattern proxies against 2021-2025 actual defaults before production deployment
+            2. **Regulatory risk** — Pre-clear ECOA compliance with counsel; document that scoring uses cash-flow indices, not protected classes
+            3. **Reputation risk** — Frame as "financial wellness" not "restricting credit"; transparent communication to affected communities
+            """)
+
+        with st.expander("Ethics & SWOT"):
+            st.markdown("""
+            **Ethical considerations:**
+            - Restricting credit access to inflation-stressed groups could deepen financial hardship
+            - Using spending-pattern proxies must not become a back door to demographic discrimination
+            - Community banks have a duty to serve underbanked populations, not just manage risk
+            - Transparency: customers should understand how their creditworthiness is assessed
+
+            **SWOT Analysis — Crossroads Community Bank**
+
+            | | **Helpful** | **Harmful** |
+            |---|---|---|
+            | **Internal** | **Strengths:** Community trust, local market knowledge, diversified loan book | **Weaknesses:** $150M deposit outflow, rising delinquencies, legacy risk models |
+            | **External** | **Opportunities:** Differentiate with demographic-aware products, capture competitors' at-risk customers | **Threats:** Continued inflation volatility, regulatory scrutiny, larger banks with better analytics |
             """)
 
     st.markdown(f'<div class="data-source">Bank data from case document (hypothetical). Credit stress metrics: 2021 vs 2025.</div>', unsafe_allow_html=True)
@@ -1027,8 +1090,8 @@ with tab8:
             <hr style="margin:12px 0;">
             <p style="font-size:16px; line-height:1.7;">
             The government says inflation was <b>+8.0% in 2022</b>. But that's an <i>average</i>
-            across all Americans. A 70-year-old retiree spending 26% of their income on medical care
-            experiences a completely different inflation rate than a 25-year-old renter spending 28% on rent.
+            across all Americans. A 70-year-old retiree spending 16% of their income on medical care
+            experiences a completely different inflation rate than a 25-year-old renter spending 27% on rent.
             </p>
             <p style="font-size:16px; line-height:1.7;">
             <b>The Divergence Index</b> calculates a personalized inflation rate for each demographic group,
@@ -1044,9 +1107,9 @@ with tab8:
         </div>''', unsafe_allow_html=True)
         g_cols = st.columns(3)
         for i, (group, details) in enumerate([
-            ("Fixed-Income Seniors", "Median income: $37K | Top expense: Medical care (26%) | Home all day = high energy bills"),
-            ("Urban Renters", "Median income: $48K | Top expense: Rent (28%) | Young professionals, student loans"),
-            ("Rural Small Business Owners", "Median income: $60.5K | Top expenses: Gas (12%) + Energy (12%) | Equipment, trucks, diesel"),
+            ("Fixed-Income Seniors", "Median income: $37K | Top expense: Home ownership (19%), Medical care (16%) | Fixed pensions, Social Security"),
+            ("Urban Renters", "Median income: $48K | Top expense: Rent (27%) | Young professionals, student loans"),
+            ("Rural Small Business Owners", "Median income: $60.5K | Top expenses: Home ownership (19%), New vehicles (12%), Gasoline (10%) | Equipment, trucks, diesel"),
         ]):
             with g_cols[i]:
                 st.markdown(f'<div class="kpi-card" style="border-left:4px solid {COLORS[group]};"><div class="label" style="color:{COLORS[group]}; font-size:15px;">{SHORT[group]}</div><p style="margin-top:8px; font-size:13px; line-height:1.6;">{details}</p></div>', unsafe_allow_html=True)
@@ -1061,7 +1124,7 @@ with tab8:
         fig = go.Figure()
         hl = di.drop_duplicates("year")[["year", "headline_cpi"]].dropna()
         fig.add_trace(go.Scatter(x=hl["year"], y=hl["headline_cpi"], mode="lines+markers",
-                                 name="Official CPI", line=dict(color="#95A5A6", width=2, dash="dash"), marker=dict(size=6)))
+                                 name="CPI-U Midwest", line=dict(color="#95A5A6", width=2, dash="dash"), marker=dict(size=6)))
         for group in WEIGHTS:
             gdf = di[di["group"] == group]
             fig.add_trace(go.Scatter(x=gdf["year"], y=gdf["group_inflation"], mode="lines+markers+text",
@@ -1069,7 +1132,7 @@ with tab8:
                                      marker=dict(size=10, symbol="diamond"),
                                      text=[f"{v:+.1f}%" for v in gdf["group_inflation"]],
                                      textposition="top center", textfont=dict(size=11, color=COLORS[group])))
-        fig.add_annotation(x=2022, y=14.4, text="Rural Biz: +14.4%<br>(energy crisis)",
+        fig.add_annotation(x=2022, y=11.1, text="Rural Biz: +11.1%<br>(energy crisis)",
                           showarrow=True, arrowhead=2, ax=-80, ay=-30,
                           bgcolor="rgba(39,174,96,0.1)", bordercolor="#27AE60", font=dict(size=11, color="#27AE60"))
         fig = styled(fig, h=450)
@@ -1118,7 +1181,7 @@ with tab8:
                      f"{b21['credit_card_utilization']*100:.0f}%", f"{b21['small_biz_delinquencies']*100:.1f}%"],
             "2025": [f"${b25['total_retail_deposits']/1e9:.2f}B", f"{b25['auto_loan_default_rate']*100:.1f}%",
                      f"{b25['credit_card_utilization']*100:.0f}%", f"{b25['small_biz_delinquencies']*100:.1f}%"],
-            "Change": ["-$150M", "+1.2pp", "+12pp", "TRIPLED"],
+            "Change": ["-$150M", "+1.2pp", "+12pp", "~2.9×"],
         }
         st.dataframe(pd.DataFrame(stress_data), use_container_width=True, hide_index=True)
 
@@ -1153,10 +1216,10 @@ with tab8:
         with p1:
             st.markdown('''
             <div class="kpi-card" style="border-left:4px solid #E74C3C;">
-                <div class="label" style="color:#E74C3C; font-size:15px;">Pillar 1: Fix Risk Models</div>
+                <div class="label" style="color:#E74C3C; font-size:15px;">Pillar 1: Fix Risk Models (ECOA-Compliant)</div>
                 <p style="font-size:13px; margin-top:8px; line-height:1.6;">
-                Add demographic inflation exposure to credit scoring. Flag portfolios in high-stress groups.
-                Increase loss reserves where real purchasing power declined most.
+                Incorporate cash-flow exposure indices — not demographics — into credit assessment.
+                Flag portfolios with high non-discretionary spending burden. ECOA-safe: uses spending patterns, not age.
                 </p>
             </div>''', unsafe_allow_html=True)
         with p2:

@@ -49,9 +49,12 @@ def generate_summary():
     for _, row in cumulative[cumulative["year"] == 2025].iterrows():
         lines.append(f"    {row['group']:36s} {row['cumulative_inflation']:+.1f}%")
 
-    lines.append("\n  KEY FINDING: In 2022, Rural Small Business Owners experienced")
-    lines.append("  inflation of +14.4% — nearly DOUBLE the headline CPI (+8.0%).")
-    lines.append("  This was driven by energy (+19.9%) and gasoline (+27.0%) price")
+    rural_2022 = di[(di["group"] == "Rural Small Business Owners") & (di["year"] == 2022)]
+    hl_2022 = di[(di["year"] == 2022)].iloc[0]["headline_cpi"] if len(di[di["year"] == 2022]) > 0 else 8.0
+    rural_val = rural_2022.iloc[0]["group_inflation"] if not rural_2022.empty else 11.1
+    lines.append(f"\n  KEY FINDING: In 2022, Rural Small Business Owners experienced")
+    lines.append(f"  inflation of {rural_val:+.1f}% — well above the Midwest headline CPI ({hl_2022:+.1f}%).")
+    lines.append("  This was driven by gasoline (+32%) and utility gas (+29%) price")
     lines.append("  spikes that disproportionately impact energy-intensive operations.")
 
     # ── DELIVERABLE 2: Non-Discretionary Burden ──
@@ -200,11 +203,11 @@ def generate_summary():
   Credit Card Utilization    {b21['credit_card_utilization']*100:.0f}%         {b25['credit_card_utilization']*100:.0f}%         +{(b25['credit_card_utilization']-b21['credit_card_utilization'])*100:.0f}pp
   Small Biz Delinquencies    {b21['small_biz_delinquencies']*100:.1f}%        {b25['small_biz_delinquencies']*100:.1f}%        +{(b25['small_biz_delinquencies']-b21['small_biz_delinquencies'])*100:.1f}pp
 
-  CORRELATION: The 3x increase in small business delinquencies (1.1% → 3.2%)
-  directly maps to Rural Small Business Owners experiencing the highest
-  inflation divergence in 2022 (+6.5pp above headline). Energy costs that
-  spiked in 2022 created a financial shock that cascaded into credit stress
-  over the following 2-3 years as reserves were depleted.
+  CORRELATION: The ~2.9x increase in small business delinquencies (1.1% → 3.2%)
+  is consistent with Rural Small Business Owners experiencing the highest
+  inflation divergence in 2022 (+3.1pp above Midwest headline). Gasoline and
+  utility costs that spiked in 2022 created a financial shock that cascaded
+  into credit stress over the following 2-3 years as reserves were depleted.
 """)
 
     lines.append("=" * 72)

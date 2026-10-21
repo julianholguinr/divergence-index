@@ -16,7 +16,7 @@ import requests
 
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from config import BLS_API_KEY, BLS_API_URL, CPI_SERIES, START_YEAR, END_YEAR
+from config import BLS_API_KEY, BLS_API_URL, CPI_SERIES, START_YEAR, END_YEAR, NATIONAL_CPI_SERIES
 
 RAW_DIR = Path(__file__).parent / "raw"
 RAW_DIR.mkdir(exist_ok=True)
@@ -98,7 +98,10 @@ def pull_all_cpi_data() -> pd.DataFrame:
     """Pull all CPI series and save to CSV."""
     # Build reverse map: series_id -> friendly name
     id_to_name = {v: k for k, v in CPI_SERIES.items()}
-    series_ids = list(CPI_SERIES.values())
+    # Also fetch national CPI-U for comparison benchmark
+    id_to_name[NATIONAL_CPI_SERIES] = "national_cpi"
+    series_ids = list(CPI_SERIES.values()) + [NATIONAL_CPI_SERIES]
+    series_ids = list(set(series_ids))  # deduplicate
 
     # BLS API allows max 50 series per request — we're under that
     result = pull_bls_series(series_ids, START_YEAR, END_YEAR)
@@ -115,11 +118,17 @@ def pull_all_cpi_data() -> pd.DataFrame:
     print(f"[BLS] Saved {len(df)} rows to {output_path}")
 
     # Create annual averages pivot table
-    annual = df[df["month"] == 0].copy()  # M13 = annual average
-    if annual.empty:
-        # Fall back to computing annual mean from monthly data
-        monthly = df[df["month"].between(1, 12)]
-        annual = monthly.groupby(["series_name", "year"])["value"].mean().reset_index()
+    # Use M13 (annual avg) where available; compute from monthly for SA series that lack it
+    annual_m13 = df[df["month"] == 0].copy()
+    series_with_m13 = set(annual_m13["series_name"].unique())
+    monthly = df[(df["month"].between(1, 12))]
+    series_needing_calc = set(df["series_name"].unique()) - series_with_m13
+    if series_needing_calc:
+        calc = (monthly[monthly["series_name"].isin(series_needing_calc)]
+                .groupby(["series_name", "year"])["value"].mean().reset_index())
+        annual = pd.concat([annual_m13, calc], ignore_index=True)
+    else:
+        annual = annual_m13
 
     pivot = annual.pivot_table(index="year", columns="series_name", values="value")
     pivot_path = RAW_DIR / "cpi_annual_pivot.csv"
