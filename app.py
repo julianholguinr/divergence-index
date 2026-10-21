@@ -617,7 +617,7 @@ with tab3:
                 labels=labels, values=vals,
                 hole=0.45, marker=dict(colors=cat_colors, line=dict(color="white", width=2)),
                 textinfo="label+percent", textposition="outside",
-                textfont=dict(size=10),
+                textfont=dict(size=10, color="black"),
                 hovertemplate="<b>%{label}</b><br>%{value:.1f}% of spending<extra></extra>",
                 sort=False,
             )])
