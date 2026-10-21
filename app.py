@@ -616,15 +616,17 @@ with tab3:
             fig_d = go.Figure(data=[go.Pie(
                 labels=labels, values=vals,
                 hole=0.45, marker=dict(colors=cat_colors, line=dict(color="white", width=2)),
-                textinfo="label+percent", textposition="outside",
-                textfont=dict(size=10, color="black"),
+                textinfo="label+percent", textposition="auto",
+                insidetextfont=dict(size=9, color="white"),
+                outsidetextfont=dict(size=9, color="black"),
                 hovertemplate="<b>%{label}</b><br>%{value:.1f}% of spending<extra></extra>",
                 sort=False,
             )])
             fig_d.update_layout(
-                height=380, margin=dict(l=10, r=10, t=40, b=10),
+                height=420, margin=dict(l=40, r=40, t=40, b=40),
                 title=dict(text=SHORT[group], font=dict(size=15, color=COLORS[group]), x=0.5),
                 showlegend=False, paper_bgcolor="white",
+                uniformtext=dict(minsize=8, mode="hide"),
                 annotations=[dict(text=f"<b>{sum(v for c, v in zip(cats, vals) if c in NON_DISCRETIONARY):.0f}%</b><br>essentials",
                                   x=0.5, y=0.5, font=dict(size=13, color="#E74C3C"), showarrow=False)],
             )
