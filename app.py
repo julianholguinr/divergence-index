@@ -96,6 +96,16 @@ def load_data():
     }
 
 
+CHART_CONFIG = {
+    "displayModeBar": True,
+    "modeBarButtonsToAdd": ["resetScale2d"],
+    "modeBarButtonsToRemove": ["lasso2d", "select2d", "autoScale2d"],
+    "displaylogo": False,
+    "scrollZoom": True,
+    "toImageButtonOptions": {"format": "png", "width": 1200, "height": 600, "scale": 2},
+}
+
+
 def styled(fig, h=500):
     fig.update_layout(
         font=dict(family="Inter, sans-serif", size=13, color="#34495E"),
@@ -107,9 +117,17 @@ def styled(fig, h=500):
             font=dict(size=12),
         ),
         hovermode="x unified",
+        dragmode="pan",
+        modebar=dict(
+            bgcolor="rgba(255,255,255,0.8)",
+            color="#6c757d",
+            activecolor="#3498DB",
+            orientation="h",
+        ),
     )
-    fig.update_xaxes(gridcolor="#F0F0F0", linecolor="#CED4DA", dtick=1)
-    fig.update_yaxes(gridcolor="#F0F0F0", linecolor="#CED4DA")
+    fig.update_xaxes(gridcolor="#F0F0F0", linecolor="#CED4DA", dtick=1,
+                     rangeslider=dict(visible=False), fixedrange=False)
+    fig.update_yaxes(gridcolor="#F0F0F0", linecolor="#CED4DA", fixedrange=False)
     return fig
 
 
@@ -240,7 +258,7 @@ with tab1:
             ))
         fig = styled(fig, h=480)
         fig.update_yaxes(title_text="Inflation rate (%)", ticksuffix="%")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, config=CHART_CONFIG)
 
     else:
         fig = go.Figure()
@@ -259,7 +277,7 @@ with tab1:
             ))
         fig = styled(fig, h=480)
         fig.update_yaxes(title_text="Total price increase since 2021 (%)", ticksuffix="%")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, config=CHART_CONFIG)
 
     if show_explanations:
         st.info(
@@ -307,7 +325,7 @@ with tab2:
         bgcolor="rgba(39,174,96,0.1)", bordercolor="#27AE60", borderpad=4,
         font=dict(size=11, color="#27AE60"),
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, config=CHART_CONFIG)
 
     with st.expander("What drove the differences? (price changes by category)"):
         year_pick = st.select_slider(
@@ -341,7 +359,7 @@ with tab2:
             )
             fig2.update_xaxes(gridcolor="#F0F0F0")
             fig2.update_yaxes(gridcolor="#F0F0F0")
-            st.plotly_chart(fig2, use_container_width=True)
+            st.plotly_chart(fig2, use_container_width=True, config=CHART_CONFIG)
 
             if show_explanations:
                 st.caption(
@@ -384,7 +402,7 @@ with tab3:
     fig.add_hrect(y0=80, y1=95, fillcolor="rgba(231,76,60,0.04)", line_width=0)
     fig = styled(fig, h=500)
     fig.update_yaxes(title_text="% of income spent on essentials", range=[50, 92], ticksuffix="%")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, config=CHART_CONFIG)
 
     st.divider()
     st.markdown("#### What's left after paying for essentials?")
@@ -449,7 +467,7 @@ with tab3:
         fig.update_layout(barmode="stack")
         fig = styled(fig, h=460)
         fig.update_yaxes(title_text="% of income", ticksuffix="%", row=1, col=1)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, config=CHART_CONFIG)
 
 # ════════════════════════════════════════════════════════════════
 # TAB 4 — BANK IMPACT
@@ -513,7 +531,7 @@ with tab4:
         fig.update_layout(barmode="group")
         fig = styled(fig, h=420)
         fig.update_yaxes(title_text="Rate (%)", ticksuffix="%")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, config=CHART_CONFIG)
 
     with c2:
         st.markdown("#### The Connection")
