@@ -159,13 +159,13 @@ CHART_CONFIG = {
 
 def styled(fig, h=500):
     fig.update_layout(
-        font=dict(family="Inter, sans-serif", size=13, color="#34495E"),
+        font=dict(family="Inter, sans-serif", size=13, color="black"),
         plot_bgcolor="rgba(250,250,252,1)", paper_bgcolor="white",
         height=h, margin=dict(l=55, r=20, t=30, b=50),
         legend=dict(
             orientation="h", yanchor="bottom", y=1.01, xanchor="center", x=0.5,
             bgcolor="rgba(255,255,255,0.95)", bordercolor="#E9ECEF", borderwidth=1,
-            font=dict(size=12),
+            font=dict(size=12, color="black"),
         ),
         hovermode="x unified",
         dragmode="pan",
@@ -173,8 +173,10 @@ def styled(fig, h=500):
                      activecolor="#3498DB", orientation="h"),
     )
     fig.update_xaxes(gridcolor="#F0F0F0", linecolor="#CED4DA", dtick=1,
-                     rangeslider=dict(visible=False), fixedrange=False)
-    fig.update_yaxes(gridcolor="#F0F0F0", linecolor="#CED4DA", fixedrange=False)
+                     rangeslider=dict(visible=False), fixedrange=False,
+                     tickfont=dict(color="black", size=12), title_font=dict(color="black"))
+    fig.update_yaxes(gridcolor="#F0F0F0", linecolor="#CED4DA", fixedrange=False,
+                     tickfont=dict(color="black", size=12), title_font=dict(color="black"))
     return fig
 
 
