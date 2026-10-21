@@ -299,8 +299,8 @@ with st.sidebar:
     )
 
     st.divider()
-    show_headline = st.toggle("Show average CPI line", value=True,
-                              help="The gray dashed line = the government's 'average' inflation")
+    show_headline = st.toggle("Show official CPI line", value=True,
+                              help="Gray dashed line = CPI-U, US City Average (national benchmark)")
     show_explanations = st.toggle("Show explanations", value=True,
                                   help="Toggle the blue explanation boxes on/off")
     show_events = st.toggle("Show timeline events", value=True,
@@ -323,8 +323,9 @@ with st.sidebar:
     if raw_file.exists():
         mod_time = datetime.fromtimestamp(raw_file.stat().st_mtime)
         st.caption(f"Data last pulled: {mod_time.strftime('%b %d, %Y %I:%M %p')}")
-    st.caption("Sources: BLS CPI (CUSR0000SA*), FRED, BLS CEX")
-    st.caption("Period: 2021 - 2025 | US City Average")
+    st.caption("Sources: BLS CPI-U (CUSR0000SA*), FRED, BLS CEX")
+    st.caption("Benchmark: CPI-U, US City Average, SA")
+    st.caption("Period: 2021 - 2025 annual averages")
 
 if not selected_groups:
     st.warning("Turn on at least one group in the sidebar to see data.")
@@ -337,7 +338,8 @@ burden_f = burden[(burden["group"].isin(selected_groups)) & (burden["year"].betw
 
 # ── Header ──
 st.markdown("# The Divergence Index")
-st.markdown("*How inflation hits different people differently — and what a bank should do about it*")
+st.markdown("*Mapping demographic inflation for regional credit strategy — the biggest divergence came in 2022, "
+            "but the real squeeze is prices vs. income (Deliverable 2).*")
 
 # ── KPI cards ──
 latest_yr = di_f["year"].max()
@@ -359,9 +361,9 @@ hl_row = di_f[di_f["year"] == latest_yr].iloc[0] if not di_f.empty else None
 if hl_row is not None:
     cards_html += f'''
     <div class="kpi-card" style="border-left: 4px solid #95A5A6;">
-        <div class="label">Official CPI ({int(latest_yr)})</div>
+        <div class="label">CPI-U US City Avg ({int(latest_yr)})</div>
         <div class="value" style="color: #95A5A6;">{hl_row["headline_cpi"]:+.1f}%</div>
-        <div class="delta neutral">government average</div>
+        <div class="delta neutral">national headline benchmark</div>
     </div>'''
 cards_html += '</div>'
 st.markdown(cards_html, unsafe_allow_html=True)
@@ -385,15 +387,53 @@ with tab1:
     if show_explanations:
         st.markdown(
             '<div class="explanation">'
-            "The government measures inflation with one number (CPI) — but a retiree spending 26% on medical bills, "
-            "a renter paying 28% on housing, and a farmer burning through diesel don't experience the same price increases. "
-            "This dashboard calculates a <b>personalized inflation rate</b> for three demographic groups "
-            "using real BLS price data, then connects the gap to <b>credit stress</b> at a regional Midwest bank. "
-            "Each colored line below is a group's real inflation. The gray dashed line is the official average. "
-            "Above the gray line = paying more than average."
+            "<b>Deliverable 1: Personalized Inflation Rates.</b> "
+            "CPI is one number for everyone — but a retiree spending 26% on medical care, "
+            "a renter paying 28% on housing, and a farmer burning through diesel experience very different price pressures. "
+            "We calculate a <b>weighted inflation rate</b> for three groups using real BLS CPI sub-indices "
+            "and expenditure weights from the Consumer Expenditure Survey. "
+            "The biggest divergence came in 2022 (+6.5pp for Rural Biz). Cumulatively, all groups end up near the CPI total — "
+            "but <b>the real story is prices vs. income</b> (see Spending Squeeze tab). "
+            "Benchmark: CPI-U, US City Average (CUSR0000SA*)."
             "</div>", unsafe_allow_html=True,
         )
 
+    # ── Cumulative totals (always visible) ──
+    cum_latest = cum_f[cum_f["year"] == cum_f["year"].max()]
+    if not cum_latest.empty:
+        cum_html = '<div class="kpi-row">'
+        for group in selected_groups:
+            crow = cum_latest[cum_latest["group"] == group]
+            if not crow.empty:
+                cv = crow.iloc[0]["cumulative_inflation"]
+                color = COLORS[group]
+                cum_html += f'''
+                <div class="kpi-card" style="border-left: 4px solid {color};">
+                    <div class="label">{SHORT[group]} — Cumulative (2021-{int(cum_f["year"].max())})</div>
+                    <div class="value" style="color: {color}; font-size: 24px;">+{cv:.1f}%</div>
+                    <div class="delta neutral">total price increase since 2021</div>
+                </div>'''
+        hl_cum = di_f[di_f["year"] == di_f["year"].max()]
+        if not hl_cum.empty:
+            # compound the headline CPI
+            cpi_years = sorted(di_f["year"].unique())
+            cpi_compound = 1.0
+            for yr in cpi_years:
+                yr_row = di_f[(di_f["year"] == yr)]
+                if not yr_row.empty:
+                    cpi_compound *= (1 + yr_row.iloc[0]["headline_cpi"] / 100)
+            cpi_total = (cpi_compound - 1) * 100
+            cum_html += f'''
+            <div class="kpi-card" style="border-left: 4px solid #95A5A6;">
+                <div class="label">Official CPI — Cumulative</div>
+                <div class="value" style="color: #95A5A6; font-size: 24px;">+{cpi_total:.1f}%</div>
+                <div class="delta neutral">US City Average (compounded)</div>
+            </div>'''
+        cum_html += '</div>'
+        st.markdown(cum_html, unsafe_allow_html=True)
+        st.caption("Note: cumulative figures are compounded year-over-year, not simple sums.")
+
+    st.divider()
     view = st.radio("View", ["Year by year", "Total since 2021"],
                     horizontal=True, label_visibility="collapsed")
 
@@ -403,7 +443,7 @@ with tab1:
             hl = di_f.drop_duplicates("year")[["year", "headline_cpi"]].dropna()
             fig.add_trace(go.Scatter(
                 x=hl["year"], y=hl["headline_cpi"],
-                mode="lines+markers", name="Official CPI (avg)",
+                mode="lines+markers", name="CPI-U (US City Avg)",
                 line=dict(color=COLORS["headline"], width=2, dash="dash"), marker=dict(size=6),
             ))
         for group in selected_groups:
@@ -467,7 +507,8 @@ with tab1:
     st.markdown(dollar_html, unsafe_allow_html=True)
 
     # (#10) Data source
-    st.markdown('<div class="data-source">Source: BLS CPI-U, US City Average, Seasonally Adjusted (CUSR0000SA*) | 2021-2025 annual averages</div>', unsafe_allow_html=True)
+    st.markdown('<div class="data-source">Source: BLS CPI-U, US City Average, Seasonally Adjusted (CUSR0000SA*) | 2021-2025 annual averages. '
+                'Benchmark is national CPI-U. Group rates use national sub-indices weighted by demographic spending patterns from BLS CEX.</div>', unsafe_allow_html=True)
 
     with st.expander("See the numbers in a table"):
         display_df = di_f[["year", "group", "group_inflation", "headline_cpi", "divergence"]].copy()
@@ -639,6 +680,31 @@ with tab3:
             st.plotly_chart(fig_d, use_container_width=True, config=CHART_CONFIG)
 
     st.caption("Red = must-pay (non-discretionary) | Orange = optional (discretionary)")
+
+    # ── Weights table so judges can see the numbers ──
+    st.divider()
+    st.markdown("#### Expenditure Weights by Group")
+    if show_explanations:
+        st.markdown(
+            '<div class="explanation">'
+            "<b>Why this matters:</b> These weights are the engine of the Divergence Index. "
+            "Each group's personalized inflation = Σ (weight × price change) across all categories. "
+            "The bigger a weight, the more that category drives the group's inflation. "
+            "Weights are derived from the BLS Consumer Expenditure Survey."
+            "</div>", unsafe_allow_html=True,
+        )
+    wt_rows = []
+    all_cats = sorted(set().union(*(WEIGHTS[g].keys() for g in selected_groups)),
+                      key=lambda c: max(WEIGHTS[g].get(c, 0) for g in selected_groups), reverse=True)
+    for cat in all_cats:
+        row = {"Category": NICE_CATEGORIES.get(cat, cat),
+               "Type": "Essential" if cat in NON_DISCRETIONARY else "Discretionary"}
+        for g in selected_groups:
+            row[SHORT[g]] = f"{WEIGHTS[g].get(cat, 0)*100:.0f}%"
+        wt_rows.append(row)
+    wt_df = pd.DataFrame(wt_rows)
+    st.dataframe(wt_df, use_container_width=True, hide_index=True)
+
     st.markdown('<div class="data-source">Weights based on BLS Consumer Expenditure Survey (CEX), Tables 1300 (age) and 3100 (housing tenure), with regional adjustments for Indiana/Midwest.</div>', unsafe_allow_html=True)
 
 # ════════════════════════════════════════════════════════════════
@@ -648,8 +714,11 @@ with tab4:
     if show_explanations:
         st.markdown(
             '<div class="explanation">'
-            "<b>What am I looking at?</b> This shows what percentage of each group's income goes to "
-            "things they MUST pay for. The higher the line, the less money left for anything else. "
+            "<b>Deliverable 2: Non-Discretionary Burden — Our Strongest Finding.</b> "
+            "Even though cumulative price inflation converges near the CPI average by 2025, "
+            "the real squeeze is <b>prices vs. income</b>. This shows what percentage of each group's income "
+            "goes to essentials they MUST pay for. Prices never came back down — they just stopped rising as fast. "
+            "Meanwhile, Social Security COLAs for Seniors lagged behind in 2021-2022, and fixed pensions didn't adjust at all. "
             "Above the red 80% line = serious financial stress."
             "</div>", unsafe_allow_html=True,
         )
