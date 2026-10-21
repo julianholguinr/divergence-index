@@ -609,25 +609,28 @@ with tab3:
         with donut_cols[i]:
             weights = WEIGHTS[group]
             cats = sorted(weights.keys(), key=lambda c: weights[c], reverse=True)
-            vals = [weights[c] * 100 for c in cats]
-            labels = [NICE_CATEGORIES.get(c, c) for c in cats]
-            cat_colors = ["#E74C3C" if c in NON_DISCRETIONARY else "#F39C12" if c in DISCRETIONARY else "#BDC3C7" for c in cats]
+            top_cats = [c for c in cats if weights[c] >= 0.04]
+            other_val = sum(weights[c] * 100 for c in cats if weights[c] < 0.04)
+            show_cats = top_cats + (["other"] if other_val > 0 else [])
+            show_vals = [weights[c] * 100 for c in top_cats] + ([other_val] if other_val > 0 else [])
+            show_labels = [NICE_CATEGORIES.get(c, c) for c in top_cats] + (["Other"] if other_val > 0 else [])
+            show_colors = ["#E74C3C" if c in NON_DISCRETIONARY else "#F39C12" for c in top_cats] + (["#BDC3C7"] if other_val > 0 else [])
 
             fig_d = go.Figure(data=[go.Pie(
-                labels=labels, values=vals,
-                hole=0.45, marker=dict(colors=cat_colors, line=dict(color="white", width=2)),
-                textinfo="label+percent", textposition="auto",
-                insidetextfont=dict(size=9, color="white"),
-                outsidetextfont=dict(size=9, color="black"),
+                labels=show_labels, values=show_vals,
+                hole=0.45, marker=dict(colors=show_colors, line=dict(color="white", width=2)),
+                textinfo="label+percent", textposition="inside",
+                insidetextfont=dict(size=10, color="white"),
                 hovertemplate="<b>%{label}</b><br>%{value:.1f}% of spending<extra></extra>",
                 sort=False,
             )])
+            ess_pct = sum(weights[c] * 100 for c in cats if c in NON_DISCRETIONARY)
             fig_d.update_layout(
-                height=420, margin=dict(l=40, r=40, t=40, b=40),
+                height=350, margin=dict(l=5, r=5, t=35, b=5),
                 title=dict(text=SHORT[group], font=dict(size=15, color=COLORS[group]), x=0.5),
                 showlegend=False, paper_bgcolor="white",
-                uniformtext=dict(minsize=8, mode="hide"),
-                annotations=[dict(text=f"<b>{sum(v for c, v in zip(cats, vals) if c in NON_DISCRETIONARY):.0f}%</b><br>essentials",
+                uniformtext=dict(minsize=7, mode="hide"),
+                annotations=[dict(text=f"<b>{ess_pct:.0f}%</b><br>essentials",
                                   x=0.5, y=0.5, font=dict(size=13, color="#E74C3C"), showarrow=False)],
             )
             st.plotly_chart(fig_d, use_container_width=True, config=CHART_CONFIG)
