@@ -341,30 +341,33 @@ st.markdown("# The Divergence Index")
 st.markdown("*Mapping demographic inflation for regional credit strategy — the biggest divergence came in 2022, "
             "but the real squeeze is prices vs. income (Deliverable 2).*")
 
-# ── KPI cards ──
+# ── KPI cards — show CUMULATIVE inflation (2021-latest), not single year ──
 latest_yr = di_f["year"].max()
 cards_html = '<div class="kpi-row">'
 for group in selected_groups:
-    row = di_f[(di_f["group"] == group) & (di_f["year"] == latest_yr)]
-    if not row.empty:
-        r = row.iloc[0]
+    crow = cum_f[(cum_f["group"] == group) & (cum_f["year"] == latest_yr)]
+    if not crow.empty:
+        cv = crow.iloc[0]["cumulative_inflation"]
         color = COLORS[group]
-        div = r["divergence"]
-        delta_class = "pos" if div > 0 else "neg" if div < 0 else "neutral"
         cards_html += f'''
         <div class="kpi-card" style="border-left: 4px solid {color};">
-            <div class="label">{SHORT[group]}</div>
-            <div class="value" style="color: {color};">{r["group_inflation"]:+.1f}%</div>
-            <div class="delta {delta_class}">{div:+.1f}pp vs official CPI</div>
+            <div class="label">{SHORT[group]} (2021–{int(latest_yr)})</div>
+            <div class="value" style="color: {color};">+{cv:.1f}%</div>
+            <div class="delta neutral">cumulative inflation since 2021</div>
         </div>'''
-hl_row = di_f[di_f["year"] == latest_yr].iloc[0] if not di_f.empty else None
-if hl_row is not None:
-    cards_html += f'''
-    <div class="kpi-card" style="border-left: 4px solid #95A5A6;">
-        <div class="label">CPI-U US City Avg ({int(latest_yr)})</div>
-        <div class="value" style="color: #95A5A6;">{hl_row["headline_cpi"]:+.1f}%</div>
-        <div class="delta neutral">national headline benchmark</div>
-    </div>'''
+# Compound CPI for comparison
+cpi_compound = 1.0
+for yr in sorted(di_f["year"].unique()):
+    yr_row = di_f[di_f["year"] == yr]
+    if not yr_row.empty:
+        cpi_compound *= (1 + yr_row.iloc[0]["headline_cpi"] / 100)
+cpi_total = (cpi_compound - 1) * 100
+cards_html += f'''
+<div class="kpi-card" style="border-left: 4px solid #95A5A6;">
+    <div class="label">CPI-U US City Avg (2021–{int(latest_yr)})</div>
+    <div class="value" style="color: #95A5A6;">+{cpi_total:.1f}%</div>
+    <div class="delta neutral">cumulative national benchmark</div>
+</div>'''
 cards_html += '</div>'
 st.markdown(cards_html, unsafe_allow_html=True)
 
@@ -398,42 +401,6 @@ with tab1:
             "</div>", unsafe_allow_html=True,
         )
 
-    # ── Cumulative totals (always visible) ──
-    cum_latest = cum_f[cum_f["year"] == cum_f["year"].max()]
-    if not cum_latest.empty:
-        cum_html = '<div class="kpi-row">'
-        for group in selected_groups:
-            crow = cum_latest[cum_latest["group"] == group]
-            if not crow.empty:
-                cv = crow.iloc[0]["cumulative_inflation"]
-                color = COLORS[group]
-                cum_html += f'''
-                <div class="kpi-card" style="border-left: 4px solid {color};">
-                    <div class="label">{SHORT[group]} — Cumulative (2021-{int(cum_f["year"].max())})</div>
-                    <div class="value" style="color: {color}; font-size: 24px;">+{cv:.1f}%</div>
-                    <div class="delta neutral">total price increase since 2021</div>
-                </div>'''
-        hl_cum = di_f[di_f["year"] == di_f["year"].max()]
-        if not hl_cum.empty:
-            # compound the headline CPI
-            cpi_years = sorted(di_f["year"].unique())
-            cpi_compound = 1.0
-            for yr in cpi_years:
-                yr_row = di_f[(di_f["year"] == yr)]
-                if not yr_row.empty:
-                    cpi_compound *= (1 + yr_row.iloc[0]["headline_cpi"] / 100)
-            cpi_total = (cpi_compound - 1) * 100
-            cum_html += f'''
-            <div class="kpi-card" style="border-left: 4px solid #95A5A6;">
-                <div class="label">Official CPI — Cumulative</div>
-                <div class="value" style="color: #95A5A6; font-size: 24px;">+{cpi_total:.1f}%</div>
-                <div class="delta neutral">US City Average (compounded)</div>
-            </div>'''
-        cum_html += '</div>'
-        st.markdown(cum_html, unsafe_allow_html=True)
-        st.caption("Note: cumulative figures are compounded year-over-year, not simple sums.")
-
-    st.divider()
     view = st.radio("View", ["Year by year", "Total since 2021"],
                     horizontal=True, label_visibility="collapsed")
 

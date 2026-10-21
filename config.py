@@ -49,70 +49,69 @@ CPI_SERIES = {
 # Source: BLS CEX Table 1300 (age), Table 3100 (housing tenure), regional adjustments
 
 WEIGHTS = {
+    # NOTE: We use only non-overlapping CPI sub-indices.
+    # "household_energy" (CUSR0000SAH21) and "energy" (CUSR0000SA0E) are BLS
+    # aggregates that overlap with gasoline, electricity, and utility_gas.
+    # Using both the total and the pieces would double-count energy spending.
+    # We use the granular series only: gasoline, electricity, utility_gas.
     "Fixed-Income Seniors": {
-        "food_at_home":      0.14,    # Seniors cook more at home
+        "food_at_home":      0.16,    # Seniors cook more at home
         "food_away":         0.04,    # Less dining out
         "rent":              0.06,    # Many own homes, some rent
-        "owners_equiv_rent": 0.12,    # Housing maintenance, property taxes
-        "household_energy":  0.08,    # Higher utility usage (home all day)
-        "gasoline":          0.04,    # Less driving
-        "medical_care":      0.18,    # Largest differentiator — Medicare gaps, prescriptions
+        "owners_equiv_rent": 0.13,    # Housing maintenance, property taxes
+        "gasoline":          0.05,    # Less driving
+        "medical_care":      0.20,    # Largest differentiator — Medicare gaps, prescriptions
         "medical_services":  0.08,    # Doctor visits, specialists
-        "electricity":       0.04,    # Part of energy, counted separately for granularity
+        "electricity":       0.07,    # Higher usage (home all day)
         "recreation":        0.05,    # Some leisure spending
         "apparel":           0.02,    # Minimal
         "education_comm":    0.03,    # Phone, internet
         "new_vehicles":      0.02,    # Rare purchases
         "used_vehicles":     0.01,
         "public_transit":    0.01,
-        "energy":            0.04,    # Fuel oil, other energy
-        "utility_gas":       0.04,    # Heating (Indiana winters)
+        "utility_gas":       0.07,    # Heating (Indiana winters)
     },
     "Urban Renters": {
         "food_at_home":      0.08,
         "food_away":         0.08,    # Young professionals eat out more
         "rent":              0.28,    # Largest expense — rent-burdened
         "owners_equiv_rent": 0.00,    # Renters, not owners
-        "household_energy":  0.04,
-        "gasoline":          0.06,    # Commuting
+        "gasoline":          0.07,    # Commuting
         "medical_care":      0.04,    # Young, fewer medical costs
         "medical_services":  0.02,
-        "electricity":       0.03,
-        "recreation":        0.07,    # Entertainment, social
+        "electricity":       0.05,    # Apartment electricity
+        "recreation":        0.08,    # Entertainment, social
         "apparel":           0.04,    # Professional wardrobe
-        "education_comm":    0.08,    # Student loans, phone, internet
+        "education_comm":    0.09,    # Student loans, phone, internet
         "new_vehicles":      0.04,    # Car payments
         "used_vehicles":     0.03,
         "public_transit":    0.04,    # Some use transit
-        "energy":            0.03,
-        "utility_gas":       0.04,
+        "utility_gas":       0.06,    # Heat in apartment
     },
     "Rural Small Business Owners": {
-        "food_at_home":      0.10,
-        "food_away":         0.05,
-        "rent":              0.04,    # Most own property
-        "owners_equiv_rent": 0.10,    # Property costs, maintenance
-        "household_energy":  0.06,
+        "food_at_home":      0.12,
+        "food_away":         0.06,
+        "rent":              0.05,    # Most own property
+        "owners_equiv_rent": 0.12,    # Property costs, maintenance
         "gasoline":          0.12,    # Heavy vehicle/equipment fuel usage
-        "medical_care":      0.06,    # Self-insured, higher premiums
-        "medical_services":  0.04,
-        "electricity":       0.05,    # Business electricity costs
-        "recreation":        0.03,
+        "medical_care":      0.08,    # Self-insured, higher premiums
+        "medical_services":  0.05,
+        "electricity":       0.07,    # Business electricity costs
+        "recreation":        0.04,
         "apparel":           0.02,
-        "education_comm":    0.04,
-        "new_vehicles":      0.06,    # Trucks, equipment
-        "used_vehicles":     0.04,    # Used equipment
+        "education_comm":    0.05,
+        "new_vehicles":      0.08,    # Trucks, equipment
+        "used_vehicles":     0.05,    # Used equipment
         "public_transit":    0.00,    # Rural — no transit
-        "energy":            0.12,    # Diesel, propane, energy-intensive operations
-        "utility_gas":       0.07,    # Heating for business and home
+        "utility_gas":       0.09,    # Heating for business and home
     },
 }
 
 # ── Non-Discretionary Classification ──
 NON_DISCRETIONARY = [
-    "food_at_home", "rent", "owners_equiv_rent", "household_energy",
+    "food_at_home", "rent", "owners_equiv_rent",
     "gasoline", "medical_care", "medical_services", "electricity",
-    "energy", "utility_gas",
+    "utility_gas",
 ]
 
 DISCRETIONARY = [
