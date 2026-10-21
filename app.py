@@ -504,7 +504,14 @@ with tab2:
     st.divider()
     st.markdown("#### Category Impact Heatmap")
     if show_explanations:
-        st.caption("Color = (spending weight) x (price change). Darker red = that category hit that group hardest.")
+        st.markdown(
+            '<div class="explanation">'
+            "<b>How to read this:</b> Each cell = (how much the group spends on that category) x "
+            "(how much that category's price changed). The number in each cell is how many "
+            "percentage points that single category added to the group's inflation. "
+            "<b>Darker red = bigger pain point. Green = prices fell, saving them money.</b>"
+            "</div>", unsafe_allow_html=True,
+        )
     heatmap_year = st.select_slider("Year", options=sorted(di_f["year"].unique()),
                                      value=int(di_f["year"].max()), key="hm_yr")
     cpi_yoy = data["cpi_yoy"]
@@ -513,36 +520,74 @@ with tab2:
         groups_for_hm = selected_groups
         z_values = []
         hover_text = []
+        annotation_text = []
         for group in groups_for_hm:
             row_vals = []
             row_hover = []
+            row_annot = []
             for cat in cats:
                 weight = WEIGHTS[group].get(cat, 0)
                 price_chg = cpi_yoy.loc[heatmap_year, cat] if cat in cpi_yoy.columns else 0
                 impact = weight * price_chg
                 row_vals.append(round(impact, 2))
                 nice = NICE_CATEGORIES.get(cat, cat)
-                row_hover.append(f"{nice}<br>Weight: {weight:.0%}<br>Price: {price_chg:+.1f}%<br>Impact: {impact:+.2f}pp")
+                row_hover.append(f"<b>{nice}</b><br>Spend weight: {weight:.0%}<br>Price change: {price_chg:+.1f}%<br>Impact: {impact:+.2f}pp")
+                if abs(impact) >= 0.15:
+                    row_annot.append(f"{impact:+.1f}")
+                elif abs(impact) >= 0.05:
+                    row_annot.append(f"{impact:+.2f}")
+                else:
+                    row_annot.append("")
             z_values.append(row_vals)
             hover_text.append(row_hover)
+            annotation_text.append(row_annot)
+
+        x_labels = [NICE_CATEGORIES.get(c, c) for c in cats]
+        y_labels = [SHORT[g] for g in groups_for_hm]
 
         fig_hm = go.Figure(data=go.Heatmap(
-            z=z_values,
-            x=[NICE_CATEGORIES.get(c, c) for c in cats],
-            y=[SHORT[g] for g in groups_for_hm],
+            z=z_values, x=x_labels, y=y_labels,
             hovertext=hover_text, hoverinfo="text",
             colorscale=[[0, "#2ECC71"], [0.35, "#FDFEFE"], [0.5, "#FEF9E7"], [0.75, "#F5B041"], [1, "#E74C3C"]],
             zmid=0, colorbar=dict(title="Impact (pp)", ticksuffix="pp"),
+            showscale=True,
         ))
+
+        for i, group in enumerate(groups_for_hm):
+            for j, cat in enumerate(cats):
+                txt = annotation_text[i][j]
+                if txt:
+                    val = z_values[i][j]
+                    font_color = "white" if abs(val) > 1.0 else "#333"
+                    fig_hm.add_annotation(
+                        x=x_labels[j], y=y_labels[i], text=txt,
+                        showarrow=False, font=dict(size=10, color=font_color, family="Inter, sans-serif"),
+                    )
+
         fig_hm.update_layout(
-            height=200 + len(groups_for_hm) * 50,
-            margin=dict(l=100, r=20, t=10, b=100),
-            font=dict(size=11), paper_bgcolor="white",
-            xaxis=dict(tickangle=-45),
+            height=max(250, 140 + len(groups_for_hm) * 70),
+            margin=dict(l=110, r=20, t=10, b=120),
+            font=dict(size=11), paper_bgcolor="white", plot_bgcolor="white",
+            xaxis=dict(tickangle=-45, side="bottom"),
+            yaxis=dict(autorange="reversed"),
         )
         st.plotly_chart(fig_hm, use_container_width=True, config=CHART_CONFIG)
 
-    st.markdown('<div class="data-source">Impact = (group spending weight) x (category price change). Shows which categories matter most for each group.</div>', unsafe_allow_html=True)
+        # Find top 3 pain points for this year
+        all_impacts = []
+        for group in groups_for_hm:
+            for cat in cats:
+                weight = WEIGHTS[group].get(cat, 0)
+                price_chg = cpi_yoy.loc[heatmap_year, cat] if cat in cpi_yoy.columns else 0
+                impact = weight * price_chg
+                all_impacts.append((SHORT[group], NICE_CATEGORIES.get(cat, cat), impact, weight * 100, price_chg))
+        all_impacts.sort(key=lambda x: x[2], reverse=True)
+        top3 = all_impacts[:3]
+        st.markdown(f"**Top 3 pain points in {heatmap_year}:**")
+        for rank, (grp, cat, imp, wt, pchg) in enumerate(top3, 1):
+            st.markdown(f"{rank}. **{grp}** — {cat}: spends {wt:.0f}% of budget, price changed {pchg:+.1f}%, adding **{imp:+.2f}pp** to their inflation")
+
+    st.markdown('<div class="data-source">Impact = (group spending weight) x (category price change). Each cell shows how many percentage points one category contributes to a group\'s total inflation.</div>', unsafe_allow_html=True)
 
 # ════════════════════════════════════════════════════════════════
 # TAB 3 — SPENDING WEIGHTS (#6 Donut Charts)
