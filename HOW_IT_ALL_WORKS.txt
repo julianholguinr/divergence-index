@@ -1,0 +1,333 @@
+===============================================================================
+HOW THE DIVERGENCE INDEX WORKS — NOTEBOOK GUIDE
+===============================================================================
+Use this to understand every part of the analysis so you can explain it
+in your own words during the presentation.
+
+===============================================================================
+PART 1: THE BIG PICTURE (What is the problem?)
+===============================================================================
+
+The government measures inflation using something called CPI (Consumer Price
+Index). CPI tracks the price of a "basket of goods" — basically a list of
+things the average American buys (groceries, rent, gas, medical care, etc.).
+
+THE PROBLEM: CPI calculates ONE number for everyone. But not everyone buys
+the same things!
+
+  - A 70-year-old retiree spends a LOT on medical care and almost nothing
+    on student loans or restaurants.
+  - A 25-year-old renter in Indianapolis spends almost 30% of their money
+    on rent and barely anything on medical care.
+  - A farmer in rural Indiana spends a ton on gasoline and diesel for their
+    trucks and equipment.
+
+So when the government says "inflation was 8%", that might be true for the
+AVERAGE person, but some people experienced 14% inflation and others only 4%.
+
+OUR ANALYSIS creates a custom inflation number for each group — that's the
+"Divergence Index." It shows how far each group's REAL inflation diverges
+(moves away) from the official average.
+
+
+===============================================================================
+PART 2: THE THREE GROUPS (Who are we studying?)
+===============================================================================
+
+The case gives us a fictional Midwest bank. We picked three customer groups
+that represent very different spending patterns:
+
+GROUP 1: FIXED-INCOME SENIORS (65+)
+  - Median income: ~$37,000/year (2025)
+  - Main expenses: Medical care (26% of spending!), groceries, home energy
+  - Why they matter: They live on Social Security and pensions — their income
+    barely rises, but their costs keep going up. Medical costs are their #1
+    pain point.
+
+GROUP 2: URBAN RENTERS (young working professionals)
+  - Median income: ~$48,000/year (2025)
+  - Main expenses: Rent (28% of spending!), food, education/student loans
+  - Why they matter: Rent is their biggest cost by far. When rent goes up,
+    they have very little room to adjust.
+
+GROUP 3: RURAL SMALL BUSINESS OWNERS
+  - Median income: ~$60,500/year (2025)
+  - Main expenses: Gasoline/diesel (12%), energy (12%), property, vehicles
+  - Why they matter: Their businesses are energy-intensive. When gas and
+    diesel prices spike, their operating costs explode — way more than the
+    average person.
+
+
+===============================================================================
+PART 3: THE METHOD (How did we calculate it?)
+===============================================================================
+
+STEP 1: Get price data
+  We pulled REAL price data from the Bureau of Labor Statistics (BLS).
+  This is the same data the government uses. We got prices for 17 categories
+  (groceries, rent, gas, medical care, electricity, etc.) from 2021 to 2025.
+
+STEP 2: Figure out how much each group spends on each category
+  Using the BLS Consumer Expenditure Survey (a massive survey of what
+  Americans actually buy), we estimated what percentage of their money each
+  group spends on each category.
+
+  Example:
+    Seniors spend 18% on medical care, but Urban Renters only spend 4%.
+    Urban Renters spend 28% on rent, but Seniors only spend 6%.
+    Rural Biz spends 12% on gasoline, but Seniors only spend 4%.
+
+  These percentages are called "expenditure weights."
+
+STEP 3: Calculate each group's personalized inflation rate
+  For each year, we take every category's price change and multiply it by
+  how much that group spends on it, then add them all up.
+
+  THE FORMULA (in plain English):
+    Group's inflation = (weight_groceries x grocery_price_change)
+                      + (weight_rent x rent_price_change)
+                      + (weight_medical x medical_price_change)
+                      + ... (for all 17 categories)
+
+  REAL EXAMPLE — Rural Small Biz in 2022:
+    Gas went up 27%. They spend 12% of income on gas.
+    Energy went up 20%. They spend 12% on energy.
+    Just those two: (0.12 x 27) + (0.12 x 20) = 3.24 + 2.4 = +5.64%
+    ... from gas and energy ALONE, before even counting food, rent, etc.
+    Their total: +14.4% (vs. the official 8.0%)
+
+STEP 4: Calculate the divergence
+  Divergence = Group's inflation rate  -  Official CPI rate
+  Rural Biz 2022:  14.4% - 8.0% = +6.5 percentage points ABOVE average
+
+  That "+6.5pp" is the Divergence Index for that group in that year.
+
+
+===============================================================================
+PART 4: THE RESULTS (What did we find?)
+===============================================================================
+
+DELIVERABLE 1: THE DIVERGENCE INDEX
+
+  Year  |  Official CPI  |  Seniors  |  Renters  |  Rural Biz
+  ------|----------------|-----------|-----------|------------
+  2022  |     +8.0%      |  +10.1%   |  +10.4%   |  +14.4%
+  2023  |     +4.1%      |   +2.1%   |   +2.7%   |   +0.2%
+  2024  |     +3.0%      |   +2.1%   |   +1.7%   |   +0.6%
+  2025  |     +2.6%      |   +2.9%   |   +2.4%   |   +2.1%
+
+  KEY STORY:
+  - 2022 was the BIG year. ALL groups paid more than the average, but
+    Rural Biz got absolutely hammered (+14.4%, nearly double the average).
+  - After 2022, energy prices cooled down, so Rural Biz actually paid LESS
+    than average in 2023-2025 (they benefited from the price reversal).
+  - Seniors have been CONSISTENTLY above or near average because medical
+    costs keep rising steadily — they don't get relief like energy groups do.
+  - From 2021 to 2025, total cumulative inflation was about +17-18% for
+    all groups, meaning everything costs ~18% more than it did in 2021.
+
+
+DELIVERABLE 2: NON-DISCRETIONARY BURDEN
+
+  "Non-discretionary" means things you MUST pay for — you can't just stop
+  buying groceries, paying rent, or going to the doctor. These are fixed
+  costs. "Discretionary" means optional things — eating out, entertainment,
+  new clothes.
+
+  We calculated: What % of each group's income goes to must-pay expenses?
+
+  Group               |  2021  |  2025  |  Change
+  --------------------|--------|--------|--------
+  Seniors             |  82.0% |  84.5% |  +2.5pp
+  Urban Renters       |  62.0% |  65.8% |  +3.8pp
+  Rural Small Biz     |  76.0% |  82.3% |  +6.3pp   <-- BIGGEST SQUEEZE
+
+  WHAT THIS MEANS IN REAL MONEY (2025):
+  - Seniors earn $37,000/yr. After essentials, they have ~$5,735 left.
+    That's $478/month for EVERYTHING else — savings, fun, emergencies.
+  - Rural Biz earns $60,500/yr. After essentials, ~$10,709 left.
+    Sounds like more, but they went from 76% to 82.3% burden — the biggest
+    jump of any group (+6.3 percentage points).
+  - Urban Renters earn $48,000/yr. After essentials, ~$16,416 left.
+    They're the least squeezed, but rent still eats 28% of their income.
+
+  THE MOST SQUEEZED: Rural Small Business Owners.
+  Their burden jumped 6.3 percentage points in just 4 years.
+
+
+DELIVERABLE 3: WHAT SHOULD THE BANK DO?
+
+  We recommend a "Divergence-Adjusted Credit Framework" (DACF) — basically,
+  stop using the average inflation number and start understanding which
+  customers are ACTUALLY under stress.
+
+  THREE PILLARS:
+
+  1. FIX THE RISK MODELS
+     Current credit models assume everyone experiences the same inflation.
+     Wrong. Add demographic inflation exposure to how the bank evaluates
+     loan risk. When a group's Divergence Index spikes, flag those loans
+     for closer monitoring.
+
+  2. CREATE TARGETED PRODUCTS
+     - Seniors: Inflation-indexed CDs (savings accounts that pay more when
+       medical costs rise), prescription financing at 0% interest
+     - Renters: Rent-smoothing accounts, first-time homebuyer programs
+     - Rural Biz: Energy cost hedging, flexible seasonal payments
+
+  3. STOP LOSING DEPOSITS
+     The bank lost $150 million in deposits (2021 to 2025). People are
+     pulling money out because they need cash to survive. Target each group:
+     - Seniors want SAFETY → guaranteed-rate CDs
+     - Rural Biz want FLEXIBILITY → fee waivers on business accounts
+     - Renters want GROWTH → high-yield savings with autopay bonuses
+
+
+===============================================================================
+PART 5: THE BANK'S DATA (Connecting inflation to credit stress)
+===============================================================================
+
+  The case gives us these bank numbers:
+
+  Metric                    |  2021     |  2025     |  Change
+  --------------------------|-----------|-----------|--------
+  Total Deposits            |  $1.2B    |  $1.05B   |  -$150M (people took money out)
+  Auto Loan Default Rate    |  1.4%     |  2.6%     |  almost doubled
+  Credit Card Utilization   |  29%      |  41%      |  people maxing out cards
+  Small Biz Delinquencies   |  1.1%     |  3.2%     |  TRIPLED
+
+  THE CONNECTION:
+  - Energy prices spiked in 2022 → Rural Biz owners burned through savings
+  - By 2024-2025, they couldn't keep up → delinquencies tripled
+  - Across all groups, people withdrew deposits to cover rising costs
+  - Credit card usage spiked because people needed to borrow to survive
+  - Auto loan defaults rose because car + gas costs hit rural areas hardest
+
+  This is the whole argument: the "average" inflation hides who's hurting.
+  The Divergence Index reveals the truth, and the bank can use it to make
+  smarter decisions.
+
+
+===============================================================================
+PART 6: DATA SOURCES (For your citations)
+===============================================================================
+
+  1. Bureau of Labor Statistics (BLS) — Consumer Price Index
+     - Series: CPI-U, US City Average, Seasonally Adjusted
+     - 18 sub-categories (food, housing, medical, energy, etc.)
+     - Period: 2021-2025, annual averages
+     - URL: https://www.bls.gov/cpi/
+
+  2. Bureau of Labor Statistics — Consumer Expenditure Survey (CEX)
+     - Used to estimate spending weights for each demographic group
+     - Tables 1300 (by age), 3100 (by housing tenure)
+     - URL: https://www.bls.gov/cex/
+
+  3. Federal Reserve Economic Data (FRED)
+     - Federal Funds Rate, CPI-U, Core CPI, Unemployment Rate
+     - Real Personal Consumption, Savings Rate, 30-Year Mortgage Rate
+     - URL: https://fred.stlouisfed.org/
+
+  4. U.S. Census Bureau — American Community Survey (ACS)
+     - Used to estimate median incomes for Indiana demographics
+     - URL: https://data.census.gov/
+
+  5. Case document — Hypothetical bank data (deposits, default rates,
+     credit card utilization, small business delinquencies)
+
+
+===============================================================================
+PART 7: KEY VOCABULARY (For your presentation)
+===============================================================================
+
+  CPI (Consumer Price Index)
+    The government's official measure of inflation. Tracks prices of a
+    "basket of goods" that the average American buys.
+
+  Inflation
+    When prices go up over time. If inflation is 8%, something that cost
+    $100 last year now costs $108.
+
+  Basis point (bp) / Percentage point (pp)
+    A way to measure changes in rates. 1 percentage point = 1%.
+    So going from 1.4% to 2.6% is a +1.2 percentage point increase.
+
+  Non-discretionary spending
+    Things you HAVE to buy — food, housing, medical care, gas, electricity.
+    You can't just decide to stop eating or stop paying rent.
+
+  Discretionary spending
+    Things you CHOOSE to buy — restaurants, entertainment, new clothes.
+    When money gets tight, these are what people cut first.
+
+  Expenditure weights
+    What percentage of their total spending a person puts toward each
+    category. Example: if you spend $280/month on rent out of $1000 total,
+    your rent weight is 28%.
+
+  Divergence Index
+    Our custom metric. It's the difference between a group's real inflation
+    and the official CPI average. Positive = they paid MORE than average.
+
+  Default rate
+    The percentage of loans where borrowers stopped paying. Higher = bad
+    for the bank.
+
+  Delinquency rate
+    The percentage of loans where borrowers are LATE on payments (but
+    haven't fully stopped paying yet). A warning sign before defaults.
+
+  Credit card utilization
+    How much of their available credit limit people are using. 29% is
+    normal. 41% means people are getting desperate and maxing out cards.
+
+  TIPS (Treasury Inflation-Protected Securities)
+    Government bonds that adjust their value based on inflation. Banks
+    can use these to hedge (protect themselves) against inflation risk.
+
+  CRA (Community Reinvestment Act)
+    A law that requires banks to serve ALL communities in their area,
+    including low-income ones. Our strategy helps with CRA compliance.
+
+
+===============================================================================
+PART 8: HOW TO RUN THE CODE
+===============================================================================
+
+  The entire analysis runs from the project folder:
+
+    cd ~/divergence-index
+
+  To see the dashboard (the interactive web app):
+    streamlit run app.py
+
+  To re-run the full pipeline (pulls fresh data + recalculates everything):
+    python3 run_pipeline.py
+
+  To re-run WITHOUT pulling new data (just recalculate):
+    python3 run_pipeline.py --skip-pull
+
+  Project structure:
+    divergence-index/
+      app.py                          <-- the dashboard (what you see in browser)
+      config.py                       <-- all settings, weights, bank data
+      run_pipeline.py                 <-- runs everything in order
+      data/
+        pull_bls_cpi.py               <-- pulls price data from government
+        pull_fred.py                  <-- pulls economic data from Fed
+        raw/                          <-- downloaded data files
+        processed/                    <-- calculated results
+      analysis/
+        divergence_index.py           <-- the math (calculates the index)
+        executive_summary.py          <-- generates the text report
+      visualizations/
+        charts.py                     <-- generates standalone chart files
+      output/
+        executive_summary.txt         <-- full written report
+        01_divergence_index.html      <-- chart files (open in browser)
+        ...
+
+
+===============================================================================
+END — You now know everything needed to present this analysis.
+===============================================================================

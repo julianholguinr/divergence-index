@@ -1,0 +1,180 @@
+========================================================================
+THE DIVERGENCE INDEX
+Mapping Demographic Inflation for Regional Credit Strategy
+QBEA Data Dive Case Competition
+========================================================================
+
+────────────────────────────────────────────────────────────────────────
+DELIVERABLE 1: THE DIVERGENCE INDEX
+────────────────────────────────────────────────────────────────────────
+
+Real experienced inflation rates by demographic group (2022-2025):
+
+  2022:
+    Headline CPI:                        +8.0%
+    Fixed-Income Seniors                 +10.1%  (+2.1pp gap)
+    Urban Renters                        +10.4%  (+2.4pp gap)
+    Rural Small Business Owners          +14.4%  (+6.5pp gap)
+
+  2023:
+    Headline CPI:                        +4.1%
+    Fixed-Income Seniors                 +2.1%  (-2.0pp gap)
+    Urban Renters                        +2.7%  (-1.5pp gap)
+    Rural Small Business Owners          +0.2%  (-4.0pp gap)
+
+  2024:
+    Headline CPI:                        +3.0%
+    Fixed-Income Seniors                 +2.1%  (-0.9pp gap)
+    Urban Renters                        +1.7%  (-1.2pp gap)
+    Rural Small Business Owners          +0.6%  (-2.3pp gap)
+
+  2025:
+    Headline CPI:                        +2.6%
+    Fixed-Income Seniors                 +2.9%  (+0.3pp gap)
+    Urban Renters                        +2.4%  (-0.3pp gap)
+    Rural Small Business Owners          +2.1%  (-0.5pp gap)
+
+  CUMULATIVE INFLATION (2021 → 2025):
+    Fixed-Income Seniors                 +17.9%
+    Urban Renters                        +17.8%
+    Rural Small Business Owners          +17.4%
+
+  KEY FINDING: In 2022, Rural Small Business Owners experienced
+  inflation of +14.4% — nearly DOUBLE the headline CPI (+8.0%).
+  This was driven by energy (+19.9%) and gasoline (+27.0%) price
+  spikes that disproportionately impact energy-intensive operations.
+
+────────────────────────────────────────────────────────────────────────
+DELIVERABLE 2: NON-DISCRETIONARY SPENDING BURDEN
+────────────────────────────────────────────────────────────────────────
+
+Percentage of median income consumed by must-pay expenses:
+
+  Group                                    2021     2025    Shift
+  ──────────────────────────────────── ──────── ──────── ────────
+  Fixed-Income Seniors                    82.0%    84.5%    +2.5pp
+  Urban Renters                           62.0%    65.8%    +3.8pp
+  Rural Small Business Owners             76.0%    82.3%    +6.3pp
+
+  MOST SQUEEZED: Rural Small Business Owners
+  Burden increased by +6.3 percentage points
+
+  Income remaining AFTER non-discretionary expenses (2025):
+    Fixed-Income Seniors                 15.5% = ~$5,735/yr
+    Urban Renters                        34.2% = ~$16,416/yr
+    Rural Small Business Owners          17.7% = ~$10,709/yr
+
+  KEY FINDING: Fixed-Income Seniors have only 15.5% of income as
+  disposable — approximately $5,735/year for ALL non-essential needs.
+  Rural Small Business Owners saw the LARGEST squeeze (+6.3pp),
+  correlating with the 3x increase in small biz delinquencies.
+
+────────────────────────────────────────────────────────────────────────
+DELIVERABLE 3: STRATEGIC RECOMMENDATION
+Localized Credit Risk Strategy with Demographic Pricing
+────────────────────────────────────────────────────────────────────────
+
+  RECOMMENDATION: Implement a Divergence-Adjusted Credit Framework (DACF)
+  that incorporates demographic inflation exposure into credit decisions,
+  product design, and deposit retention.
+
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │  THREE-PILLAR STRATEGY                                              │
+  ├──────────────────────────────────────────────────────────────────────┤
+  │                                                                      │
+  │  PILLAR 1: CREDIT RISK RECALIBRATION                                │
+  │  ─────────────────────────────────────                              │
+  │  - Adjust credit scoring models to weight demographic inflation      │
+  │    exposure alongside traditional FICO/income metrics                │
+  │  - Create "inflation stress" flags for portfolios heavily            │
+  │    concentrated in high-divergence demographics                      │
+  │  - Increase loss reserves for auto loans (rural) and credit          │
+  │    cards (seniors) where real purchasing power declined most          │
+  │                                                                      │
+  │  PILLAR 2: PRODUCT INNOVATION                                       │
+  │  ─────────────────────────────                                      │
+  │  For Seniors:                                                        │
+  │    - Inflation-indexed CD rates that track medical CPI               │
+  │    - Prescription drug co-pay financing (0% APR, 12-month)           │
+  │    - Simplified home equity access for property-rich/cash-poor       │
+  │                                                                      │
+  │  For Urban Renters:                                                  │
+  │    - Rent-smoothing deposit accounts with autopay incentives         │
+  │    - First-time homebuyer programs targeting rent-to-own             │
+  │    - High-yield savings with rent-burden calculation tools           │
+  │                                                                      │
+  │  For Rural Small Business:                                           │
+  │    - Energy cost hedging credit facilities                           │
+  │    - Flexible payment schedules tied to seasonal revenue cycles      │
+  │    - Equipment financing with fuel cost escalation clauses           │
+  │                                                                      │
+  │  PILLAR 3: DEPOSIT RETENTION & GROWTH                               │
+  │  ───────────────────────────────────                                │
+  │  - Target deposit outflows ($150M decline) with demographic-         │
+  │    specific retention offers                                         │
+  │  - Seniors: guaranteed rate floor CDs (retain $45M+ at risk)        │
+  │  - Rural Biz: business operating account bundles with fee waivers   │
+  │  - Urban Renters: automated savings programs with bonus rates        │
+  │                                                                      │
+  └──────────────────────────────────────────────────────────────────────┘
+
+  STAKEHOLDER ANALYSIS:
+  ┌────────────────────┬────────────────────────┬──────────────────────┐
+  │ Stakeholder        │ Interest               │ Impact of Strategy   │
+  ├────────────────────┼────────────────────────┼──────────────────────┤
+  │ Board / Executives │ ROA, deposit growth    │ Reduced defaults,    │
+  │                    │                        │ retained deposits    │
+  ├────────────────────┼────────────────────────┼──────────────────────┤
+  │ Credit Risk Team   │ Portfolio quality,     │ Better risk models,  │
+  │                    │ loss forecasting       │ earlier intervention │
+  ├────────────────────┼────────────────────────┼──────────────────────┤
+  │ Retail Banking     │ Customer retention,    │ Targeted products    │
+  │                    │ cross-sell             │ increase engagement  │
+  ├────────────────────┼────────────────────────┼──────────────────────┤
+  │ Customers          │ Affordable products,   │ Products that match  │
+  │                    │ financial stability    │ real cost pressures  │
+  ├────────────────────┼────────────────────────┼──────────────────────┤
+  │ Regulators (OCC,   │ Fair lending, CRA      │ Demonstrates data-   │
+  │ FDIC)              │ compliance             │ driven inclusion     │
+  └────────────────────┴────────────────────────┴──────────────────────┘
+
+  TRADEOFFS & MITIGATION:
+
+  Risk 1: Demographic-adjusted pricing may raise fair lending concerns
+    Mitigation: Frame as "hardship products" available to all, not
+    pricing discrimination. Audit for disparate impact quarterly.
+
+  Risk 2: Inflation-indexed products expose bank to rate risk
+    Mitigation: Cap indexed rates; hedge with Treasury Inflation-
+    Protected Securities (TIPS) in investment portfolio.
+
+  Risk 3: Loosening credit for stressed groups increases loss exposure
+    Mitigation: Start with secured products (home equity, equipment
+    liens). Limit unsecured expansion to 5% of portfolio per year.
+
+  PROJECTED IMPACT (12-MONTH):
+    - Deposit retention improvement:    +$60-90M (vs. $150M outflow trend)
+    - Auto loan loss reduction:         -15-20 bps
+    - Small business delinquency:       Stabilize at 2.5% (from 3.2%)
+    - Customer satisfaction (NPS):      +8-12 points in target segments
+
+────────────────────────────────────────────────────────────────────────
+APPENDIX: CREDIT STRESS CORRELATION WITH DIVERGENCE INDEX
+────────────────────────────────────────────────────────────────────────
+
+  Metric                     2021        2025        Change
+  ─────────────────────────  ──────────  ──────────  ──────────
+  Total Retail Deposits      $1.2B       $1.05B     -$150M
+  Auto Loan Default Rate     1.4%        2.6%        +1.2pp
+  Credit Card Utilization    29%         41%         +12pp
+  Small Biz Delinquencies    1.1%        3.2%        +2.1pp
+
+  CORRELATION: The 3x increase in small business delinquencies (1.1% → 3.2%)
+  directly maps to Rural Small Business Owners experiencing the highest
+  inflation divergence in 2022 (+6.5pp above headline). Energy costs that
+  spiked in 2022 created a financial shock that cascaded into credit stress
+  over the following 2-3 years as reserves were depleted.
+
+========================================================================
+END OF ANALYSIS
+========================================================================
