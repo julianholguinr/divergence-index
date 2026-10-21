@@ -332,6 +332,19 @@ burden_f = burden[(burden["group"].isin(selected_groups)) & (burden["year"].betw
 st.markdown("# The Divergence Index")
 st.markdown("*How inflation hits different people differently — and what a bank should do about it*")
 
+st.markdown('''
+<div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 12px; padding: 20px 24px; margin: 12px 0 20px 0; border: 1px solid #2a2a4a;">
+    <p style="color: #e0e0e0; font-size: 14.5px; line-height: 1.75; margin: 0;">
+    The government measures inflation with a single number (CPI) — but a retiree spending 26% on medical bills,
+    a renter paying 28% on housing, and a farmer burning through diesel don't experience the same price increases.
+    This dashboard calculates a <b style="color: #3498DB;">personalized inflation rate</b> for three demographic groups
+    using real BLS price data, then connects the gap to
+    <b style="color: #E74C3C;">credit stress</b> at a regional Midwest bank.
+    Use the tabs below to explore the data, simulate scenarios, and see our strategic recommendation.
+    </p>
+</div>
+''', unsafe_allow_html=True)
+
 # ── KPI cards ──
 latest_yr = di_f["year"].max()
 cards_html = '<div class="kpi-row">'
