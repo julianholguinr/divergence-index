@@ -217,6 +217,44 @@ def calculate_nondiscretionary_burden(
     return pd.DataFrame(results)
 
 
+def calculate_yoy_dec_to_dec(
+    raw_csv: str = "data/raw/cpi_midwest_raw.csv",
+    weights: dict[str, dict[str, float]] = None,
+) -> pd.DataFrame:
+    """Calculate year-over-year inflation using December index levels."""
+    if weights is None:
+        weights = WEIGHTS
+    df = pd.read_csv(raw_csv)
+    dec = df[df["month"] == 12]
+    pivot = dec.pivot_table(index="year", columns="series_name", values="value")
+
+    results = []
+    for year in sorted(pivot.index):
+        if year - 1 not in pivot.index:
+            continue
+        prev = pivot.loc[year - 1]
+        curr = pivot.loc[year]
+        mw_yoy = ((curr["all_items"] / prev["all_items"]) - 1) * 100
+        nat_yoy = ((curr["national_cpi"] / prev["national_cpi"]) - 1) * 100 if "national_cpi" in curr.index else None
+
+        for group_name, group_weights in weights.items():
+            rate = sum(
+                w * ((curr[cat] / prev[cat]) - 1) * 100
+                for cat, w in group_weights.items()
+                if cat in curr.index
+            )
+            results.append({
+                "year": year,
+                "group": group_name,
+                "group_inflation": round(rate, 2),
+                "headline_cpi": round(mw_yoy, 2),
+                "national_cpi": round(nat_yoy, 2) if nat_yoy is not None else None,
+                "divergence": round(rate - mw_yoy, 2),
+            })
+
+    return pd.DataFrame(results)
+
+
 def calculate_cumulative_dec_to_dec(
     raw_csv: str = "data/raw/cpi_midwest_raw.csv",
     weights: dict[str, dict[str, float]] = None,
@@ -296,6 +334,10 @@ def run_full_analysis() -> dict:
     cum_df.to_csv(PROCESSED_DIR / "cumulative_inflation.csv", index=False)
     for _, row in cum_df[cum_df["year"] == END_YEAR].iterrows():
         print(f"  {row['group']:30s}  {row['cumulative_inflation']:+.1f}% total")
+
+    # Dec-to-Dec YoY
+    yoy_d2d = calculate_yoy_dec_to_dec()
+    yoy_d2d.to_csv(PROCESSED_DIR / "yoy_dec_to_dec.csv", index=False)
 
     # Dec-to-Dec cumulative
     cum_d2d = calculate_cumulative_dec_to_dec()

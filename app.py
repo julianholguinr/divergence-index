@@ -143,6 +143,7 @@ def load_data():
         "di": pd.read_csv(PROCESSED / "divergence_index.csv"),
         "cum": pd.read_csv(PROCESSED / "cumulative_inflation.csv"),
         "cum_d2d": pd.read_csv(PROCESSED / "cumulative_dec_to_dec.csv") if (PROCESSED / "cumulative_dec_to_dec.csv").exists() else None,
+        "yoy_d2d": pd.read_csv(PROCESSED / "yoy_dec_to_dec.csv") if (PROCESSED / "yoy_dec_to_dec.csv").exists() else None,
         "burden": pd.read_csv(PROCESSED / "nondiscretionary_burden.csv"),
         "cpi_yoy": pd.read_csv(PROCESSED / "cpi_yoy_changes.csv", index_col=0),
         "cpi_raw": pd.read_csv(RAW / "cpi_annual_pivot.csv", index_col=0) if (RAW / "cpi_annual_pivot.csv").exists() else None,
@@ -440,29 +441,31 @@ with tab1:
                     horizontal=True, label_visibility="collapsed")
 
     if view == "Year by year":
+        # Use December-to-December YoY rates
+        yoy_d2d = data.get("yoy_d2d")
+        if yoy_d2d is not None and not yoy_d2d.empty:
+            yoy_src = yoy_d2d[(yoy_d2d["year"] >= start_yr) & (yoy_d2d["year"] <= end_yr)]
+        else:
+            yoy_src = di_f
         fig = go.Figure()
-        if show_headline and not di_f.empty:
-            hl = di_f.drop_duplicates("year")[["year", "headline_cpi"]].dropna()
+        if show_headline and not yoy_src.empty:
+            hl = yoy_src.drop_duplicates("year")[["year", "headline_cpi"]].dropna()
             fig.add_trace(go.Scatter(
                 x=hl["year"], y=hl["headline_cpi"],
                 mode="lines+markers", name="CPI-U Midwest",
                 line=dict(color=COLORS["headline"], width=2, dash="dash"), marker=dict(size=6),
             ))
-            # National CPI comparison line
-            cpi_raw = data["cpi_raw"]
-            if cpi_raw is not None and "national_cpi" in cpi_raw.columns:
-                nat_yoy = cpi_raw["national_cpi"].pct_change() * 100
-                nat_yoy = nat_yoy.dropna()
-                nat_yoy = nat_yoy[(nat_yoy.index >= start_yr) & (nat_yoy.index <= end_yr)]
-                if not nat_yoy.empty:
+            if "national_cpi" in yoy_src.columns:
+                nat = yoy_src.drop_duplicates("year")[["year", "national_cpi"]].dropna()
+                if not nat.empty:
                     fig.add_trace(go.Scatter(
-                        x=nat_yoy.index, y=nat_yoy.values,
+                        x=nat["year"], y=nat["national_cpi"],
                         mode="lines+markers", name="CPI-U National",
                         line=dict(color="#8E44AD", width=2, dash="dot"), marker=dict(size=5),
                     ))
         yoy_text_pos = ["top center", "bottom center", "top right"]
         for idx, group in enumerate(selected_groups):
-            gdf = di_f[di_f["group"] == group]
+            gdf = yoy_src[yoy_src["group"] == group]
             pos = yoy_text_pos[idx % len(yoy_text_pos)]
             fig.add_trace(go.Scatter(
                 x=gdf["year"], y=gdf["group_inflation"],
@@ -476,7 +479,7 @@ with tab1:
         if show_events:
             add_timeline_annotations(fig, range(start_yr, end_yr + 1))
         fig = styled(fig, h=480)
-        fig.update_yaxes(title_text="Inflation rate (%)", ticksuffix="%")
+        fig.update_yaxes(title_text="Inflation rate (%, Dec to Dec)", ticksuffix="%")
         st.plotly_chart(fig, use_container_width=True, config=CHART_CONFIG)
     else:
         # Use December-to-December cumulative (base = Dec 2020)
