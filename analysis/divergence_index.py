@@ -217,6 +217,45 @@ def calculate_nondiscretionary_burden(
     return pd.DataFrame(results)
 
 
+def calculate_cumulative_dec_to_dec(
+    raw_csv: str = "data/raw/cpi_midwest_raw.csv",
+    weights: dict[str, dict[str, float]] = None,
+    base_year: int = 2020,
+) -> pd.DataFrame:
+    """Calculate cumulative inflation using December index levels.
+
+    Base = December of base_year. Each subsequent December is compared
+    to that base via a weighted cost index per group.
+    """
+    if weights is None:
+        weights = WEIGHTS
+    df = pd.read_csv(raw_csv)
+    dec = df[df["month"] == 12]
+    pivot = dec.pivot_table(index="year", columns="series_name", values="value")
+    base = pivot.loc[base_year]
+
+    results = []
+    for year in sorted(pivot.index):
+        # Midwest CPI headline
+        mw_cum = ((pivot.loc[year, "all_items"] / base["all_items"]) - 1) * 100
+
+        for group_name, group_weights in weights.items():
+            cost_index = sum(
+                w * (pivot.loc[year, cat] / base[cat])
+                for cat, w in group_weights.items()
+                if cat in pivot.columns
+            )
+            cum = (cost_index - 1) * 100
+            results.append({
+                "year": year,
+                "group": group_name,
+                "cumulative_inflation": round(cum, 2),
+                "midwest_cpi_cumulative": round(mw_cum, 2),
+            })
+
+    return pd.DataFrame(results)
+
+
 def run_full_analysis() -> dict:
     """Execute the complete Divergence Index analysis pipeline."""
     print("=" * 60)
@@ -257,6 +296,15 @@ def run_full_analysis() -> dict:
     cum_df.to_csv(PROCESSED_DIR / "cumulative_inflation.csv", index=False)
     for _, row in cum_df[cum_df["year"] == END_YEAR].iterrows():
         print(f"  {row['group']:30s}  {row['cumulative_inflation']:+.1f}% total")
+
+    # Dec-to-Dec cumulative
+    cum_d2d = calculate_cumulative_dec_to_dec()
+    cum_d2d.to_csv(PROCESSED_DIR / "cumulative_dec_to_dec.csv", index=False)
+    print("\n  CUMULATIVE INFLATION (Dec-to-Dec, base Dec 2020):")
+    for _, row in cum_d2d[cum_d2d["year"] == END_YEAR].iterrows():
+        print(f"  {row['group']:30s}  {row['cumulative_inflation']:+.1f}%")
+    mw_end = cum_d2d[cum_d2d["year"] == END_YEAR].iloc[0]["midwest_cpi_cumulative"]
+    print(f"  {'Midwest CPI':30s}  {mw_end:+.1f}%")
 
     # Non-discretionary burden
     print("\n[4/4] Analyzing non-discretionary burden...")

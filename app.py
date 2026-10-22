@@ -142,6 +142,7 @@ def load_data():
     return {
         "di": pd.read_csv(PROCESSED / "divergence_index.csv"),
         "cum": pd.read_csv(PROCESSED / "cumulative_inflation.csv"),
+        "cum_d2d": pd.read_csv(PROCESSED / "cumulative_dec_to_dec.csv") if (PROCESSED / "cumulative_dec_to_dec.csv").exists() else None,
         "burden": pd.read_csv(PROCESSED / "nondiscretionary_burden.csv"),
         "cpi_yoy": pd.read_csv(PROCESSED / "cpi_yoy_changes.csv", index_col=0),
         "cpi_raw": pd.read_csv(RAW / "cpi_annual_pivot.csv", index_col=0) if (RAW / "cpi_annual_pivot.csv").exists() else None,
@@ -290,18 +291,20 @@ _peak_div_row = di.loc[di["divergence"].abs().idxmax()] if not di.empty else Non
 _peak_div_group = SHORT.get(_peak_div_row["group"], "") if _peak_div_row is not None else ""
 _peak_div_year = int(_peak_div_row["year"]) if _peak_div_row is not None else 2022
 _peak_div_val = _peak_div_row["divergence"] if _peak_div_row is not None else 0
-_cum_final = cum[cum["year"] == cum["year"].max()] if not cum.empty else cum
-_cum_min = _cum_final["cumulative_inflation"].min() if not _cum_final.empty else 0
-_cum_max = _cum_final["cumulative_inflation"].max() if not _cum_final.empty else 0
-_hl_cum = 0
-if data["cpi_raw"] is not None and "all_items" in data["cpi_raw"].columns:
-    _cpi_raw = data["cpi_raw"]["all_items"]
-    _base_val = _cpi_raw.get(START_YEAR)
-    _end_val = _cpi_raw.get(int(cum["year"].max()))
-    if _base_val and _base_val > 0 and _end_val:
-        _hl_cum = round(((_end_val / _base_val) - 1) * 100, 1)
-_gap_lo = round(_hl_cum - _cum_max, 1)
-_gap_hi = round(_hl_cum - _cum_min, 1)
+# Use Dec-to-Dec cumulative for summary stats
+_cum_d2d = data.get("cum_d2d")
+if _cum_d2d is not None and not _cum_d2d.empty:
+    _cum_final = _cum_d2d[_cum_d2d["year"] == _cum_d2d["year"].max()]
+    _cum_min = _cum_final["cumulative_inflation"].min()
+    _cum_max = _cum_final["cumulative_inflation"].max()
+    _hl_cum = _cum_final.iloc[0]["midwest_cpi_cumulative"]
+else:
+    _cum_final = cum[cum["year"] == cum["year"].max()] if not cum.empty else cum
+    _cum_min = _cum_final["cumulative_inflation"].min() if not _cum_final.empty else 0
+    _cum_max = _cum_final["cumulative_inflation"].max() if not _cum_final.empty else 0
+    _hl_cum = 0
+_gap_lo = round(_cum_min - _hl_cum, 1)
+_gap_hi = round(_cum_max - _hl_cum, 1)
 
 # ── Sidebar ──
 with st.sidebar:
@@ -370,31 +373,32 @@ st.markdown("# The Divergence Index")
 st.markdown("*Mapping demographic inflation for regional credit strategy — the biggest divergence came in 2022, "
             "but the real squeeze is prices vs. income (Deliverable 2).*")
 
-# ── KPI cards — show CUMULATIVE inflation (2021-latest), not single year ──
+# ── KPI cards — show Dec-to-Dec cumulative inflation ──
 latest_yr = di_f["year"].max()
+cum_d2d = data.get("cum_d2d")
 cards_html = '<div class="kpi-row">'
 for group in selected_groups:
-    crow = cum_f[(cum_f["group"] == group) & (cum_f["year"] == latest_yr)]
+    if cum_d2d is not None:
+        crow = cum_d2d[(cum_d2d["group"] == group) & (cum_d2d["year"] == int(latest_yr))]
+    else:
+        crow = cum_f[(cum_f["group"] == group) & (cum_f["year"] == latest_yr)]
     if not crow.empty:
         cv = crow.iloc[0]["cumulative_inflation"]
         color = COLORS[group]
         cards_html += f'''
         <div class="kpi-card" style="border-left: 4px solid {color};">
-            <div class="label">{SHORT[group]} (2021–{int(latest_yr)})</div>
+            <div class="label">{SHORT[group]} (Dec 2020–Dec {int(latest_yr)})</div>
             <div class="value" style="color: {color};">+{cv:.1f}%</div>
-            <div class="delta neutral">cumulative inflation since 2021</div>
+            <div class="delta neutral">cumulative since Dec 2020</div>
         </div>'''
-# CPI cumulative from index ratio (matches chart method)
-cpi_raw = data["cpi_raw"]
-if cpi_raw is not None and "all_items" in cpi_raw.columns:
-    _mw = cpi_raw["all_items"]
-    _base = _mw.get(START_YEAR, _mw.iloc[0])
-    cpi_total = ((_mw.get(int(latest_yr), _mw.iloc[-1]) / _base) - 1) * 100
+# CPI cumulative from Dec-to-Dec
+if cum_d2d is not None and not cum_d2d.empty:
+    cpi_total = cum_d2d[cum_d2d["year"] == int(latest_yr)].iloc[0]["midwest_cpi_cumulative"]
 else:
     cpi_total = 0.0
 cards_html += f'''
 <div class="kpi-card" style="border-left: 4px solid #95A5A6;">
-    <div class="label">CPI-U Midwest (2021–{int(latest_yr)})</div>
+    <div class="label">CPI-U Midwest (Dec 2020–Dec {int(latest_yr)})</div>
     <div class="value" style="color: #95A5A6;">+{cpi_total:.1f}%</div>
     <div class="delta neutral">cumulative Midwest benchmark</div>
 </div>'''
@@ -426,14 +430,13 @@ with tab1:
             "We calculate a <b>weighted inflation rate</b> for three groups using real BLS CPI sub-indices "
             "and expenditure weights from the Consumer Expenditure Survey. "
             f"The biggest divergence came in {_peak_div_year} ({_peak_div_val:+.1f}pp for {_peak_div_group}, driven by energy spikes). "
-            f"Cumulatively, groups land {_gap_lo:.1f}–{_gap_hi:.1f}pp below the headline — shelter dominates the CPI basket (~36%) "
-            "more than any single group's budget, pulling the headline above individual experience. "
-            "But <b>the real story is prices vs. income</b> (see Spending Squeeze tab). "
+            f"Since Dec 2020, cumulative inflation ranges from {_cum_min:.1f}% to {_cum_max:.1f}% across groups vs. {_hl_cum:.1f}% for Midwest CPI. "
+            "But <b>the real story is prices vs. income</b> — these groups spend 58–70% on non-discretionary items (see Spending Squeeze tab). "
             "Benchmark: CPI-U, Midwest Urban (CUUR0200SA0)."
             "</div>", unsafe_allow_html=True,
         )
 
-    view = st.radio("View", ["Year by year", "Total since 2021"],
+    view = st.radio("View", ["Year by year", "Total since Dec 2020"],
                     horizontal=True, label_visibility="collapsed")
 
     if view == "Year by year":
@@ -474,52 +477,40 @@ with tab1:
         fig.update_yaxes(title_text="Inflation rate (%)", ticksuffix="%")
         st.plotly_chart(fig, use_container_width=True, config=CHART_CONFIG)
     else:
+        # Use December-to-December cumulative (base = Dec 2020)
+        cum_d2d = data.get("cum_d2d")
         fig = go.Figure()
-        if show_headline:
-            cpi_raw = data["cpi_raw"]
-            if cpi_raw is not None:
-                # Midwest CPI cumulative
-                if "all_items" in cpi_raw.columns:
-                    mw = cpi_raw["all_items"]
-                    base_val = mw.get(START_YEAR)
-                    if base_val and base_val > 0:
-                        mw_cum = ((mw / base_val) - 1) * 100
-                        mw_cum = mw_cum[(mw_cum.index >= start_yr) & (mw_cum.index <= end_yr)]
-                        fig.add_trace(go.Scatter(
-                            x=mw_cum.index, y=mw_cum.values,
-                            mode="lines+markers", name="CPI-U Midwest",
-                            line=dict(color=COLORS["headline"], width=2, dash="dash"), marker=dict(size=6),
-                            hovertemplate="%{y:+.1f}%<extra>CPI-U Midwest</extra>",
-                        ))
-                # National CPI cumulative
-                if "national_cpi" in cpi_raw.columns:
-                    nat = cpi_raw["national_cpi"]
-                    base_val = nat.get(START_YEAR)
-                    if base_val and base_val > 0:
-                        nat_cum = ((nat / base_val) - 1) * 100
-                        nat_cum = nat_cum[(nat_cum.index >= start_yr) & (nat_cum.index <= end_yr)]
-                        fig.add_trace(go.Scatter(
-                            x=nat_cum.index, y=nat_cum.values,
-                            mode="lines+markers", name="CPI-U National",
-                            line=dict(color="#8E44AD", width=2, dash="dot"), marker=dict(size=5),
-                            hovertemplate="%{y:+.1f}%<extra>CPI-U National</extra>",
-                        ))
-        for group in selected_groups:
-            gdf = cum_f[cum_f["group"] == group]
-            r, g, b = int(COLORS[group][1:3], 16), int(COLORS[group][3:5], 16), int(COLORS[group][5:7], 16)
-            fig.add_trace(go.Scatter(
-                x=gdf["year"], y=gdf["cumulative_inflation"],
-                mode="lines+markers+text", name=SHORT[group],
-                line=dict(color=COLORS[group], width=3), marker=dict(size=9),
-                fill="tozeroy", fillcolor=f"rgba({r},{g},{b},0.07)",
-                text=[f"{v:+.1f}%" if v != 0 else "" for v in gdf["cumulative_inflation"]],
-                textposition="top center", textfont=dict(size=11),
-                hovertemplate="%{y:+.1f}% total<extra>" + SHORT[group] + "</extra>",
-            ))
+        if cum_d2d is not None and not cum_d2d.empty:
+            cum_d2d_f = cum_d2d[(cum_d2d["year"] >= 2020) & (cum_d2d["year"] <= end_yr)]
+            # Midwest CPI line
+            if show_headline:
+                mw_line = cum_d2d_f.drop_duplicates("year")[["year", "midwest_cpi_cumulative"]].dropna()
+                fig.add_trace(go.Scatter(
+                    x=mw_line["year"], y=mw_line["midwest_cpi_cumulative"],
+                    mode="lines+markers", name="CPI-U Midwest",
+                    line=dict(color=COLORS["headline"], width=2, dash="dash"), marker=dict(size=6),
+                    hovertemplate="%{y:+.1f}%<extra>CPI-U Midwest</extra>",
+                ))
+            for group in selected_groups:
+                gdf = cum_d2d_f[cum_d2d_f["group"] == group]
+                r, g, b = int(COLORS[group][1:3], 16), int(COLORS[group][3:5], 16), int(COLORS[group][5:7], 16)
+                fig.add_trace(go.Scatter(
+                    x=gdf["year"], y=gdf["cumulative_inflation"],
+                    mode="lines+markers+text", name=SHORT[group],
+                    line=dict(color=COLORS[group], width=3), marker=dict(size=9),
+                    fill="tozeroy", fillcolor=f"rgba({r},{g},{b},0.07)",
+                    text=[f"{v:+.1f}%" if v != 0 else "" for v in gdf["cumulative_inflation"]],
+                    textposition="top center", textfont=dict(size=11),
+                    hovertemplate="%{y:+.1f}% total<extra>" + SHORT[group] + "</extra>",
+                ))
         if show_events:
-            add_timeline_annotations(fig, range(start_yr, end_yr + 1))
+            add_timeline_annotations(fig, range(2020, end_yr + 1))
         fig = styled(fig, h=480)
-        fig.update_yaxes(title_text="Total price increase since 2021 (%)", ticksuffix="%")
+        fig.update_yaxes(title_text="Cumulative price increase since Dec 2020 (%)", ticksuffix="%")
+        fig.update_xaxes(
+            tickvals=list(range(2020, end_yr + 1)),
+            ticktext=[f"Dec {y}" for y in range(2020, end_yr + 1)],
+        )
         st.plotly_chart(fig, use_container_width=True, config=CHART_CONFIG)
 
     # (#4) Dollar impact calculator
@@ -1317,3 +1308,25 @@ with tab8:
             </div>''', unsafe_allow_html=True)
         st.markdown("")
         st.success("**Projected 12-month impact:** Recover $60-90M deposits | Auto losses -15-20bps | Biz delinquencies stabilize at 2.5%")
+
+# ── References ──
+st.divider()
+st.markdown("### References & Data Sources")
+st.markdown("""
+| Source | Description | Link |
+|--------|-------------|------|
+| BLS CPI-U Midwest | Consumer Price Index, All Urban Consumers, Midwest Region (CUUR0200 series), Not Seasonally Adjusted | [data.bls.gov/timeseries/CUUR0200SA0](https://data.bls.gov/timeseries/CUUR0200SA0) |
+| BLS CPI-U National | Consumer Price Index, All Urban Consumers, U.S. City Average (CUSR0000SA0) | [data.bls.gov/timeseries/CUSR0000SA0](https://data.bls.gov/timeseries/CUSR0000SA0) |
+| BLS API v2 | Public Data API used to pull all CPI sub-category series | [bls.gov/developers](https://www.bls.gov/developers/) |
+| BLS Consumer Expenditure Survey | Expenditure weights by age (Table 1300) and housing tenure (Table 3100), 2021 | [bls.gov/cex/tables.htm](https://www.bls.gov/cex/tables.htm) |
+| BLS CPI Technical Notes | Methodology, weights, and category definitions for CPI basket | [bls.gov/cpi/technical-notes](https://www.bls.gov/cpi/technical-notes/) |
+| CPI Relative Importance | Official CPI basket weights showing ~36% shelter share | [bls.gov/cpi/tables/relative-importance](https://www.bls.gov/cpi/tables/relative-importance/) |
+| ACS Income Estimates | Median income by age group and geography (Indiana) | [data.census.gov](https://data.census.gov/) |
+| ECOA (Reg B) | Equal Credit Opportunity Act — spending-profile-based targeting is compliant | [consumerfinance.gov/rules-policy/regulations/1002](https://www.consumerfinance.gov/rules-policy/regulations/1002/) |
+
+**Methodology:** December-to-December index levels (not seasonally adjusted) for cumulative calculations.
+Annual averages for year-over-year rate comparisons. All CPI sub-indices are Midwest Urban except
+Public Transit (national, Midwest not published). Weights are renormalized to sum to 1.00 across tracked
+categories only — untracked CEX categories (vehicle insurance, household furnishings, etc.) are omitted.
+""")
+st.caption("Built with Streamlit, Plotly, and Python. Data pulled via BLS Public Data API v2.")
