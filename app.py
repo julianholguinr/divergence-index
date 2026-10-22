@@ -296,12 +296,10 @@ _cum_max = _cum_final["cumulative_inflation"].max() if not _cum_final.empty else
 _hl_cum = 0
 if data["cpi_raw"] is not None and "all_items" in data["cpi_raw"].columns:
     _cpi_raw = data["cpi_raw"]["all_items"]
-    _hl_yoy = _cpi_raw.pct_change().dropna() * 100
-    _hl_factor = 1.0
-    for _yr in range(2022, int(cum["year"].max()) + 1):
-        if _yr in _hl_yoy.index:
-            _hl_factor *= (1 + _hl_yoy[_yr] / 100)
-    _hl_cum = round((_hl_factor - 1) * 100, 1)
+    _base_val = _cpi_raw.get(START_YEAR)
+    _end_val = _cpi_raw.get(int(cum["year"].max()))
+    if _base_val and _base_val > 0 and _end_val:
+        _hl_cum = round(((_end_val / _base_val) - 1) * 100, 1)
 _gap_lo = round(_hl_cum - _cum_max, 1)
 _gap_hi = round(_hl_cum - _cum_min, 1)
 
@@ -386,13 +384,14 @@ for group in selected_groups:
             <div class="value" style="color: {color};">+{cv:.1f}%</div>
             <div class="delta neutral">cumulative inflation since 2021</div>
         </div>'''
-# Compound CPI for comparison
-cpi_compound = 1.0
-for yr in sorted(di_f["year"].unique()):
-    yr_row = di_f[di_f["year"] == yr]
-    if not yr_row.empty:
-        cpi_compound *= (1 + yr_row.iloc[0]["headline_cpi"] / 100)
-cpi_total = (cpi_compound - 1) * 100
+# CPI cumulative from index ratio (matches chart method)
+cpi_raw = data["cpi_raw"]
+if cpi_raw is not None and "all_items" in cpi_raw.columns:
+    _mw = cpi_raw["all_items"]
+    _base = _mw.get(START_YEAR, _mw.iloc[0])
+    cpi_total = ((_mw.get(int(latest_yr), _mw.iloc[-1]) / _base) - 1) * 100
+else:
+    cpi_total = 0.0
 cards_html += f'''
 <div class="kpi-card" style="border-left: 4px solid #95A5A6;">
     <div class="label">CPI-U Midwest (2021–{int(latest_yr)})</div>
