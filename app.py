@@ -297,6 +297,26 @@ def generate_pdf_report(di_df, burden_df, cum_df):
 data = load_data(data_hash=_data_hash())
 di, cum, burden = data["di"], data["cum"], data["burden"]
 
+# ── Precomputed summary stats (used in explanation text) ──
+_peak_div_row = di.loc[di["divergence"].abs().idxmax()] if not di.empty else None
+_peak_div_group = SHORT.get(_peak_div_row["group"], "") if _peak_div_row is not None else ""
+_peak_div_year = int(_peak_div_row["year"]) if _peak_div_row is not None else 2022
+_peak_div_val = _peak_div_row["divergence"] if _peak_div_row is not None else 0
+_cum_final = cum[cum["year"] == cum["year"].max()] if not cum.empty else cum
+_cum_min = _cum_final["cumulative_inflation"].min() if not _cum_final.empty else 0
+_cum_max = _cum_final["cumulative_inflation"].max() if not _cum_final.empty else 0
+_hl_cum = 0
+if data["cpi_raw"] is not None and "all_items" in data["cpi_raw"].columns:
+    _cpi_raw = data["cpi_raw"]["all_items"]
+    _hl_yoy = _cpi_raw.pct_change().dropna() * 100
+    _hl_factor = 1.0
+    for _yr in range(2022, int(cum["year"].max()) + 1):
+        if _yr in _hl_yoy.index:
+            _hl_factor *= (1 + _hl_yoy[_yr] / 100)
+    _hl_cum = round((_hl_factor - 1) * 100, 1)
+_gap_lo = round(_hl_cum - _cum_max, 1)
+_gap_hi = round(_hl_cum - _cum_min, 1)
+
 # ── Sidebar ──
 with st.sidebar:
     st.markdown("### Settings")
@@ -414,12 +434,12 @@ with tab1:
         st.markdown(
             '<div class="explanation">'
             "<b>Deliverable 1: Personalized Inflation Rates.</b> "
-            "CPI is one number for everyone — but a retiree spending 16% on medical care, "
-            "a renter paying 31% on housing, and a farmer spending 10% on gasoline experience very different price pressures. "
+            f"CPI is one number for everyone — but a retiree spending {WEIGHTS['Fixed-Income Seniors']['medical_care']:.0%} on medical care, "
+            f"a renter paying {WEIGHTS['Urban Renters']['rent']:.0%} on housing, and a farmer spending {WEIGHTS['Rural Small Business Owners']['gasoline']:.0%} on gasoline experience very different price pressures. "
             "We calculate a <b>weighted inflation rate</b> for three groups using real BLS CPI sub-indices "
             "and expenditure weights from the Consumer Expenditure Survey. "
-            "The biggest divergence came in 2022 (+2.9pp for Rural Biz, driven by energy spikes). "
-            "Cumulatively, groups land 1-1.5pp below the headline — shelter dominates the CPI basket (~36%) "
+            f"The biggest divergence came in {_peak_div_year} ({_peak_div_val:+.1f}pp for {_peak_div_group}, driven by energy spikes). "
+            f"Cumulatively, groups land {_gap_lo:.1f}–{_gap_hi:.1f}pp below the headline — shelter dominates the CPI basket (~36%) "
             "more than any single group's budget, pulling the headline above individual experience. "
             "But <b>the real story is prices vs. income</b> (see Spending Squeeze tab). "
             "Benchmark: CPI-U, Midwest Urban (CUUR0200SA0)."
@@ -721,8 +741,8 @@ with tab4:
         st.markdown(
             '<div class="explanation">'
             "<b>Deliverable 2: Non-Discretionary Burden — Our Strongest Finding.</b> "
-            "All three groups saw cumulative inflation 1-1.5pp below the Midwest headline — "
-            "shelter (~36% of the CPI basket) rose +25% and pulls the headline up more than any single group's budget. "
+            f"All three groups saw cumulative inflation {_gap_lo:.1f}–{_gap_hi:.1f}pp below the Midwest headline ({_hl_cum:.1f}%) — "
+            "shelter (~36% of the CPI basket) rose ~25% and pulls the headline up more than any single group's budget. "
             "But the real squeeze is <b>prices vs. income</b>. This shows what <b>% of income</b> goes to "
             "essentials they MUST pay for (not to be confused with % of spending in the donut charts). "
             "Prices never came back down — they just stopped rising as fast. "
