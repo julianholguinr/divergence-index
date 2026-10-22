@@ -16,7 +16,7 @@ import requests
 
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from config import BLS_API_KEY, BLS_API_URL, CPI_SERIES, START_YEAR, END_YEAR, NATIONAL_CPI_SERIES
+from config import BLS_API_KEY, BLS_API_URL, CPI_SERIES, DATA_START_YEAR, START_YEAR, END_YEAR, NATIONAL_CPI_SERIES
 
 RAW_DIR = Path(__file__).parent / "raw"
 RAW_DIR.mkdir(exist_ok=True)
@@ -104,7 +104,7 @@ def pull_all_cpi_data() -> pd.DataFrame:
     series_ids = list(set(series_ids))  # deduplicate
 
     # BLS API allows max 50 series per request — we're under that
-    result = pull_bls_series(series_ids, START_YEAR, END_YEAR)
+    result = pull_bls_series(series_ids, DATA_START_YEAR, END_YEAR)
     df = parse_bls_response(result, id_to_name)
 
     if df.empty:

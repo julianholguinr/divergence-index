@@ -5,7 +5,8 @@ BLS_API_URL = "https://api.bls.gov/publicAPI/v2/timeseries/data/"
 BLS_API_KEY = ""  # Optional: add your key for higher rate limits
 
 # ── Analysis Period ──
-START_YEAR = 2021
+DATA_START_YEAR = 2020  # baseline for YoY calculation (not plotted)
+START_YEAR = 2021       # first year shown in charts / cumulative base
 END_YEAR = 2025
 
 # ── BLS Series IDs ──
