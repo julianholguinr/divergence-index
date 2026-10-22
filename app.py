@@ -493,19 +493,41 @@ with tab1:
                     line=dict(color=COLORS["headline"], width=2, dash="dash"), marker=dict(size=6),
                     hovertemplate="%{y:+.1f}%<extra>CPI-U Midwest</extra>",
                 ))
-            text_positions = ["top center", "bottom center", "top right"]
-            for idx, group in enumerate(selected_groups):
+            for group in selected_groups:
                 gdf = cum_d2d_f[cum_d2d_f["group"] == group]
-                pos = text_positions[idx % len(text_positions)]
                 fig.add_trace(go.Scatter(
                     x=gdf["year"], y=gdf["cumulative_inflation"],
-                    mode="lines+markers+text", name=SHORT[group],
+                    mode="lines+markers", name=SHORT[group],
                     line=dict(color=COLORS[group], width=3), marker=dict(size=9),
-                    text=[f"{v:+.1f}%" if v != 0 else "" for v in gdf["cumulative_inflation"]],
-                    textposition=pos, textfont=dict(size=11, color=COLORS[group]),
                     hovertemplate="%{y:+.1f}% total<extra>" + SHORT[group] + "</extra>",
                 ))
+            # End-of-line labels (right side, staggered to avoid overlap)
+            final_vals = []
+            for group in selected_groups:
+                gdf = cum_d2d_f[cum_d2d_f["group"] == group]
+                if not gdf.empty:
+                    last = gdf.iloc[-1]
+                    final_vals.append((last["cumulative_inflation"], group))
+            if show_headline and not mw_line.empty:
+                final_vals.append((mw_line.iloc[-1]["midwest_cpi_cumulative"], "__headline__"))
+            final_vals.sort(key=lambda x: x[0], reverse=True)
+            # Stagger: ensure at least 0.8pp spacing
+            placed = []
+            for val, grp in final_vals:
+                y = val
+                for py in placed:
+                    if abs(y - py) < 0.8:
+                        y = py - 0.8
+                placed.append(y)
+                color = COLORS.get(grp, COLORS["headline"])
+                label = SHORT.get(grp, "CPI-U Midwest")
+                fig.add_annotation(
+                    x=end_yr, y=y, xanchor="left", yanchor="middle",
+                    text=f"  <b>{label} {val:+.1f}%</b>",
+                    showarrow=False, font=dict(size=12, color=color),
+                )
         fig = styled(fig, h=480)
+        fig.update_layout(margin=dict(r=140))
         fig.update_yaxes(title_text="Cumulative price increase since Dec 2020 (%)", ticksuffix="%")
         fig.update_xaxes(
             tickvals=list(range(2020, end_yr + 1)),
