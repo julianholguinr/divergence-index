@@ -959,7 +959,10 @@ with tab6:
         "B: burden shift (pp) × 1.5 &nbsp;|&nbsp; "
         "C: peak YoY inflation ÷ 1.5 &nbsp;|&nbsp; "
         "D: max |divergence any year| × 2. "
-        "All capped at 10. Final = mean(A,B,C,D)."
+        "All capped at 10. Final = mean(A,B,C,D). "
+        "Scalings are anchored to observable ranges: burden runs 55–75% across groups (÷2 maps that to 0–10), "
+        "shifts are 4–5pp (×1.5 → mid-range), peak YoY hit 9–11% (÷1.5 → 6–7), "
+        "and max divergence is 1–3pp (×2 keeps it proportional). No thresholds were tuned to outcomes."
         "</div>", unsafe_allow_html=True,
     )
 
