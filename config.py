@@ -59,36 +59,36 @@ NATIONAL_CPI_SERIES = "CUSR0000SA0"
 
 WEIGHTS = {
     "Fixed-Income Seniors": {
-        "food_at_home":      0.11,    # CEX 65+: ~$4,500 / $46K ≈ 9.8%, scaled
-        "food_away":         0.06,    # CEX 65+: ~$2,200 ≈ 4.8%, scaled
+        "food_at_home":      0.13,    # CEX 65+: food at home, higher share for retirees
+        "food_away":         0.07,    # CEX 65+: dining out, modest
         "rent":              0.04,    # Mostly homeowners, small renter fraction
         "owners_equiv_rent": 0.26,    # CPI OER weight ~24% Midwest; seniors own outright but
                                       # OER captures rental-equivalent value, not mortgage cost
         "gasoline":          0.05,    # CEX 65+: gas portion of transport
-        "medical_care":      0.16,    # CEX 65+: ~$7,000 = 15.3% — single aggregate, no overlap
-        "electricity":       0.05,    # CEX 65+: utilities ~$4,000 total; elec ~55%
-        "utility_gas":       0.03,    # CEX 65+: natural gas ~35% of utilities
-        "recreation":        0.04,    # CEX 65+: ~$2,600, trimmed for shelter rebalance
-        "apparel":           0.03,    # CEX 65+: ~$1,000, scaled
-        "education_comm":    0.04,    # CEX 65+: phone + internet
-        "new_vehicles":      0.05,    # CEX 65+: vehicles, trimmed for shelter rebalance
+        "medical_care":      0.12,    # CEX 65+: healthcare — largest differentiator
+        "electricity":       0.06,    # CEX 65+: utilities, home all day
+        "utility_gas":       0.04,    # CEX 65+: heating, higher home presence
+        "recreation":        0.05,    # CEX 65+: leisure, hobbies
+        "apparel":           0.02,    # CEX 65+: minimal clothing spend
+        "education_comm":    0.03,    # CEX 65+: phone + internet
+        "new_vehicles":      0.05,    # CEX 65+: vehicle replacement
         "used_vehicles":     0.05,    # Remainder of vehicle spending
         "public_transit":    0.03,    # Small but tracked
     },
     "Urban Renters": {
-        "food_at_home":      0.09,    # CEX renters <35, scaled
-        "food_away":         0.08,    # Young professionals eat out more
-        "rent":              0.31,    # CEX renters <35: shelter ~33%; rent is primary cost
+        "food_at_home":      0.10,    # CEX renters <35, scaled
+        "food_away":         0.11,    # Young professionals eat out frequently
+        "rent":              0.33,    # CEX renters <35: shelter ~33%; rent is primary cost
         "owners_equiv_rent": 0.00,    # Renters, not owners
-        "gasoline":          0.06,    # Commuting
-        "medical_care":      0.06,    # CEX <35: ~$2,500 = ~5%, scaled
-        "electricity":       0.04,    # CEX renters: utilities ~6.5%, elec ~55%
-        "utility_gas":       0.02,    # Apartment gas heating, lower
-        "recreation":        0.07,    # Entertainment, social
-        "apparel":           0.03,    # Professional wardrobe
-        "education_comm":    0.10,    # Student loans + phone + internet
-        "new_vehicles":      0.06,    # Car payments
-        "used_vehicles":     0.04,    # Used car portion, trimmed for shelter rebalance
+        "gasoline":          0.07,    # Commuting
+        "medical_care":      0.04,    # CEX <35: young, low healthcare spend
+        "electricity":       0.05,    # CEX renters: apartment utilities
+        "utility_gas":       0.05,    # Apartment gas heating + cooking
+        "recreation":        0.06,    # Entertainment, social
+        "apparel":           0.02,    # Professional wardrobe
+        "education_comm":    0.04,    # Phone + internet (student loans excluded from CPI)
+        "new_vehicles":      0.05,    # Car payments
+        "used_vehicles":     0.04,    # Used car portion
         "public_transit":    0.04,    # Urban transit
     },
     "Rural Small Business Owners": {
@@ -100,7 +100,7 @@ WEIGHTS = {
         "medical_care":      0.09,    # Self-insured, higher premiums
         "electricity":       0.05,    # Business + home electricity
         "utility_gas":       0.04,    # Heating for business and home
-        "recreation":        0.04,    # Some leisure, trimmed for shelter rebalance
+        "recreation":        0.04,    # Some leisure
         "apparel":           0.03,    # Minimal, scaled
         "education_comm":    0.04,    # Phone, internet, some training
         "new_vehicles":      0.10,    # Trucks, equipment — biggest differentiator
