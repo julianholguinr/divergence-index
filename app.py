@@ -460,15 +460,17 @@ with tab1:
                         mode="lines+markers", name="CPI-U National",
                         line=dict(color="#8E44AD", width=2, dash="dot"), marker=dict(size=5),
                     ))
-        for group in selected_groups:
+        yoy_text_pos = ["top center", "bottom center", "top right"]
+        for idx, group in enumerate(selected_groups):
             gdf = di_f[di_f["group"] == group]
+            pos = yoy_text_pos[idx % len(yoy_text_pos)]
             fig.add_trace(go.Scatter(
                 x=gdf["year"], y=gdf["group_inflation"],
                 mode="lines+markers+text", name=SHORT[group],
                 line=dict(color=COLORS[group], width=3),
                 marker=dict(size=10, symbol="diamond"),
                 text=[f"{v:+.1f}%" for v in gdf["group_inflation"]],
-                textposition="top center", textfont=dict(size=11, color=COLORS[group]),
+                textposition=pos, textfont=dict(size=11, color=COLORS[group]),
                 hovertemplate="%{y:+.1f}%<extra>" + SHORT[group] + "</extra>",
             ))
         if show_events:
@@ -491,16 +493,16 @@ with tab1:
                     line=dict(color=COLORS["headline"], width=2, dash="dash"), marker=dict(size=6),
                     hovertemplate="%{y:+.1f}%<extra>CPI-U Midwest</extra>",
                 ))
-            for group in selected_groups:
+            text_positions = ["top center", "bottom center", "top right"]
+            for idx, group in enumerate(selected_groups):
                 gdf = cum_d2d_f[cum_d2d_f["group"] == group]
-                r, g, b = int(COLORS[group][1:3], 16), int(COLORS[group][3:5], 16), int(COLORS[group][5:7], 16)
+                pos = text_positions[idx % len(text_positions)]
                 fig.add_trace(go.Scatter(
                     x=gdf["year"], y=gdf["cumulative_inflation"],
                     mode="lines+markers+text", name=SHORT[group],
                     line=dict(color=COLORS[group], width=3), marker=dict(size=9),
-                    fill="tozeroy", fillcolor=f"rgba({r},{g},{b},0.07)",
                     text=[f"{v:+.1f}%" if v != 0 else "" for v in gdf["cumulative_inflation"]],
-                    textposition="top center", textfont=dict(size=11),
+                    textposition=pos, textfont=dict(size=11, color=COLORS[group]),
                     hovertemplate="%{y:+.1f}% total<extra>" + SHORT[group] + "</extra>",
                 ))
         fig = styled(fig, h=480)
