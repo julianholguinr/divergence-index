@@ -17,7 +17,7 @@ from plotly.subplots import make_subplots
 import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).parent))
-from config import WEIGHTS, BANK_DATA, MEDIAN_INCOMES, NON_DISCRETIONARY, DISCRETIONARY, CPI_SERIES
+from config import WEIGHTS, BANK_DATA, MEDIAN_INCOMES, NON_DISCRETIONARY, DISCRETIONARY, CPI_SERIES, START_YEAR
 
 PROCESSED = Path(__file__).parent / "data" / "processed"
 RAW = Path(__file__).parent / "data" / "raw"
@@ -476,6 +476,35 @@ with tab1:
         st.plotly_chart(fig, use_container_width=True, config=CHART_CONFIG)
     else:
         fig = go.Figure()
+        if show_headline:
+            cpi_raw = data["cpi_raw"]
+            if cpi_raw is not None:
+                # Midwest CPI cumulative
+                if "all_items" in cpi_raw.columns:
+                    mw = cpi_raw["all_items"]
+                    base_val = mw.get(START_YEAR)
+                    if base_val and base_val > 0:
+                        mw_cum = ((mw / base_val) - 1) * 100
+                        mw_cum = mw_cum[(mw_cum.index >= start_yr) & (mw_cum.index <= end_yr)]
+                        fig.add_trace(go.Scatter(
+                            x=mw_cum.index, y=mw_cum.values,
+                            mode="lines+markers", name="CPI-U Midwest",
+                            line=dict(color=COLORS["headline"], width=2, dash="dash"), marker=dict(size=6),
+                            hovertemplate="%{y:+.1f}%<extra>CPI-U Midwest</extra>",
+                        ))
+                # National CPI cumulative
+                if "national_cpi" in cpi_raw.columns:
+                    nat = cpi_raw["national_cpi"]
+                    base_val = nat.get(START_YEAR)
+                    if base_val and base_val > 0:
+                        nat_cum = ((nat / base_val) - 1) * 100
+                        nat_cum = nat_cum[(nat_cum.index >= start_yr) & (nat_cum.index <= end_yr)]
+                        fig.add_trace(go.Scatter(
+                            x=nat_cum.index, y=nat_cum.values,
+                            mode="lines+markers", name="CPI-U National",
+                            line=dict(color="#8E44AD", width=2, dash="dot"), marker=dict(size=5),
+                            hovertemplate="%{y:+.1f}%<extra>CPI-U National</extra>",
+                        ))
         for group in selected_groups:
             gdf = cum_f[cum_f["group"] == group]
             r, g, b = int(COLORS[group][1:3], 16), int(COLORS[group][3:5], 16), int(COLORS[group][5:7], 16)
