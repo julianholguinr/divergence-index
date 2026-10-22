@@ -476,8 +476,6 @@ with tab1:
                 textposition=pos, textfont=dict(size=11, color=COLORS[group]),
                 hovertemplate="%{y:+.1f}%<extra>" + SHORT[group] + "</extra>",
             ))
-        if show_events:
-            add_timeline_annotations(fig, range(start_yr, end_yr + 1))
         fig = styled(fig, h=480)
         fig.update_yaxes(title_text="Inflation rate (%, Dec to Dec)", ticksuffix="%")
         st.plotly_chart(fig, use_container_width=True, config=CHART_CONFIG)
