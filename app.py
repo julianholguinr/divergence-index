@@ -503,8 +503,6 @@ with tab1:
                     textposition="top center", textfont=dict(size=11),
                     hovertemplate="%{y:+.1f}% total<extra>" + SHORT[group] + "</extra>",
                 ))
-        if show_events:
-            add_timeline_annotations(fig, range(2020, end_yr + 1))
         fig = styled(fig, h=480)
         fig.update_yaxes(title_text="Cumulative price increase since Dec 2020 (%)", ticksuffix="%")
         fig.update_xaxes(
