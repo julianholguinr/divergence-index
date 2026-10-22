@@ -137,19 +137,20 @@ st.markdown("""
 
 
 def _data_hash():
-    """Hash of processed data files so cache busts when data changes."""
-    import hashlib
+    """Hash processed CSVs + config weights so cache busts on any change."""
+    import hashlib, json
     h = hashlib.md5()
     for p in sorted(PROCESSED.glob("*.csv")):
         h.update(p.read_bytes())
     pivot = RAW / "cpi_annual_pivot.csv"
     if pivot.exists():
         h.update(pivot.read_bytes())
+    h.update(json.dumps(WEIGHTS, sort_keys=True).encode())
     return h.hexdigest()
 
 
-@st.cache_data
-def load_data(_hash=None):
+@st.cache_data(ttl=300)
+def load_data(data_hash=None):
     return {
         "di": pd.read_csv(PROCESSED / "divergence_index.csv"),
         "cum": pd.read_csv(PROCESSED / "cumulative_inflation.csv"),
@@ -293,7 +294,7 @@ def generate_pdf_report(di_df, burden_df, cum_df):
 
 
 # ── Load data ──
-data = load_data(_hash=_data_hash())
+data = load_data(data_hash=_data_hash())
 di, cum, burden = data["di"], data["cum"], data["burden"]
 
 # ── Sidebar ──
