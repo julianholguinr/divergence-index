@@ -51,7 +51,7 @@ def generate_summary():
 
     rural_2022 = di[(di["group"] == "Rural Small Business Owners") & (di["year"] == 2022)]
     hl_2022 = di[(di["year"] == 2022)].iloc[0]["headline_cpi"] if len(di[di["year"] == 2022]) > 0 else 8.0
-    rural_val = rural_2022.iloc[0]["group_inflation"] if not rural_2022.empty else 11.1
+    rural_val = rural_2022.iloc[0]["group_inflation"] if not rural_2022.empty else 10.9
     lines.append(f"\n  KEY FINDING: In 2022, Rural Small Business Owners experienced")
     lines.append(f"  inflation of {rural_val:+.1f}% — well above the Midwest headline CPI ({hl_2022:+.1f}%).")
     lines.append("  This was driven by gasoline (+32%) and utility gas (+29%) price")
@@ -91,10 +91,13 @@ def generate_summary():
             f"    {group:36s} {remaining_pct:.1f}% = ~${remaining_dollars:,.0f}/yr"
         )
 
-    lines.append("\n  KEY FINDING: Fixed-Income Seniors have only 15.5% of income as")
-    lines.append("  disposable — approximately $5,735/year for ALL non-essential needs.")
-    lines.append("  Rural Small Business Owners saw the LARGEST squeeze (+6.3pp),")
-    lines.append("  correlating with the 3x increase in small biz delinquencies.")
+    most_burdened = max(squeeze_data, key=lambda x: x[2])
+    rem_pct = 100 - most_burdened[2]
+    rem_dollars = MEDIAN_INCOMES[most_burdened[0]][2025] * rem_pct / 100
+    lines.append(f"\n  KEY FINDING: {most_burdened[0]} have only {rem_pct:.1f}% of income as")
+    lines.append(f"  disposable — approximately ${rem_dollars:,.0f}/year for ALL non-essential needs.")
+    lines.append(f"  {most_squeezed[0]} saw the LARGEST squeeze ({most_squeezed[3]:+.1f}pp),")
+    lines.append("  correlating with the ~2.9× increase in small biz delinquencies.")
 
     # ── DELIVERABLE 3: Strategic Recommendation ──
     lines.append("\n" + "─" * 72)
@@ -205,7 +208,7 @@ def generate_summary():
 
   CORRELATION: The ~2.9x increase in small business delinquencies (1.1% → 3.2%)
   is consistent with Rural Small Business Owners experiencing the highest
-  inflation divergence in 2022 (+3.1pp above Midwest headline). Gasoline and
+  inflation divergence in 2022 (+2.9pp above Midwest headline). Gasoline and
   utility costs that spiked in 2022 created a financial shock that cascaded
   into credit stress over the following 2-3 years as reserves were depleted.
 """)

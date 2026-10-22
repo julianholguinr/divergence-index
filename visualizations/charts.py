@@ -90,8 +90,8 @@ def chart_divergence_index() -> go.Figure:
     fig.update_xaxes(title_text="Year", dtick=1)
 
     fig.add_annotation(
-        x=2022, y=11.1,
-        text="Rural Biz: +11.1%<br>(Energy spike)",
+        x=2022, y=10.9,
+        text="Rural Biz: +10.9%<br>(Energy spike)",
         showarrow=True, arrowhead=2, ax=-80, ay=-40,
         bgcolor="rgba(39,174,96,0.1)", bordercolor="#27AE60",
         font=dict(size=11, color="#27AE60"),
@@ -173,14 +173,14 @@ def chart_nondiscretionary_burden() -> go.Figure:
         ))
 
     fig.add_hline(
-        y=80, line_dash="dot", line_color="#E74C3C", line_width=1.5,
-        annotation_text="Critical Burden Threshold (80%)",
+        y=75, line_dash="dot", line_color="#E74C3C", line_width=1.5,
+        annotation_text="Severe Burden Threshold (75%)",
         annotation_position="bottom right",
         annotation_font=dict(size=10, color="#E74C3C"),
     )
 
     fig = _style_figure(fig, "Non-Discretionary Spending Burden (% of Income)", height=520)
-    fig.update_yaxes(title_text="% of Median Income", range=[50, 95], ticksuffix="%")
+    fig.update_yaxes(title_text="% of Median Income", range=[50, 85], ticksuffix="%")
     fig.update_xaxes(title_text="Year", dtick=1)
 
     return fig

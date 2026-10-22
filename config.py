@@ -60,49 +60,50 @@ WEIGHTS = {
     "Fixed-Income Seniors": {
         "food_at_home":      0.11,    # CEX 65+: ~$4,500 / $46K ≈ 9.8%, scaled
         "food_away":         0.06,    # CEX 65+: ~$2,200 ≈ 4.8%, scaled
-        "rent":              0.05,    # Mixed owners/renters
-        "owners_equiv_rent": 0.19,    # CEX 65+: shelter ~$7,800 = 16.6%, scaled
-        "gasoline":          0.06,    # CEX 65+: gas portion of transport
+        "rent":              0.04,    # Mostly homeowners, small renter fraction
+        "owners_equiv_rent": 0.26,    # CPI OER weight ~24% Midwest; seniors own outright but
+                                      # OER captures rental-equivalent value, not mortgage cost
+        "gasoline":          0.05,    # CEX 65+: gas portion of transport
         "medical_care":      0.16,    # CEX 65+: ~$7,000 = 15.3% — single aggregate, no overlap
         "electricity":       0.05,    # CEX 65+: utilities ~$4,000 total; elec ~55%
         "utility_gas":       0.03,    # CEX 65+: natural gas ~35% of utilities
-        "recreation":        0.06,    # CEX 65+: ~$2,600
+        "recreation":        0.04,    # CEX 65+: ~$2,600, trimmed for shelter rebalance
         "apparel":           0.03,    # CEX 65+: ~$1,000, scaled
         "education_comm":    0.04,    # CEX 65+: phone + internet
-        "new_vehicles":      0.07,    # CEX 65+: vehicles + parts ≈ 12.5%, split
-        "used_vehicles":     0.06,    # Remainder of vehicle spending
+        "new_vehicles":      0.05,    # CEX 65+: vehicles, trimmed for shelter rebalance
+        "used_vehicles":     0.05,    # Remainder of vehicle spending
         "public_transit":    0.03,    # Small but tracked
     },
     "Urban Renters": {
         "food_at_home":      0.09,    # CEX renters <35, scaled
-        "food_away":         0.09,    # Young professionals eat out more
-        "rent":              0.27,    # CEX renters: shelter ~30%, primary rent dominates
+        "food_away":         0.08,    # Young professionals eat out more
+        "rent":              0.31,    # CEX renters <35: shelter ~33%; rent is primary cost
         "owners_equiv_rent": 0.00,    # Renters, not owners
         "gasoline":          0.06,    # Commuting
         "medical_care":      0.06,    # CEX <35: ~$2,500 = ~5%, scaled
         "electricity":       0.04,    # CEX renters: utilities ~6.5%, elec ~55%
         "utility_gas":       0.02,    # Apartment gas heating, lower
-        "recreation":        0.08,    # Entertainment, social
-        "apparel":           0.04,    # Professional wardrobe
+        "recreation":        0.07,    # Entertainment, social
+        "apparel":           0.03,    # Professional wardrobe
         "education_comm":    0.10,    # Student loans + phone + internet
         "new_vehicles":      0.06,    # Car payments
-        "used_vehicles":     0.05,    # Used car portion
+        "used_vehicles":     0.04,    # Used car portion, trimmed for shelter rebalance
         "public_transit":    0.04,    # Urban transit
     },
     "Rural Small Business Owners": {
         "food_at_home":      0.11,    # CEX Midwest homeowners, scaled
         "food_away":         0.06,    # Less dining out in rural areas
-        "rent":              0.03,    # Most own property
-        "owners_equiv_rent": 0.19,    # Property costs, maintenance, insurance
+        "rent":              0.02,    # Most own property
+        "owners_equiv_rent": 0.24,    # CPI OER weight ~24% Midwest; rural lower housing value
         "gasoline":          0.10,    # Heavy vehicle/equipment fuel — biggest differentiator
         "medical_care":      0.09,    # Self-insured, higher premiums
         "electricity":       0.05,    # Business + home electricity
         "utility_gas":       0.04,    # Heating for business and home
-        "recreation":        0.05,    # Some leisure
+        "recreation":        0.04,    # Some leisure, trimmed for shelter rebalance
         "apparel":           0.03,    # Minimal, scaled
         "education_comm":    0.04,    # Phone, internet, some training
-        "new_vehicles":      0.12,    # Trucks, equipment — biggest differentiator
-        "used_vehicles":     0.08,    # Used equipment, vehicles
+        "new_vehicles":      0.10,    # Trucks, equipment — biggest differentiator
+        "used_vehicles":     0.07,    # Used equipment, vehicles
         "public_transit":    0.01,    # Rural — near zero
     },
 }

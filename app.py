@@ -214,35 +214,35 @@ def add_timeline_annotations(fig, years):
 def compute_risk_score(group, di_df, burden_df, detail=False):
     """Compute a 1-10 credit risk score for a group.
 
-    Components:
-      A = |divergence| × 1.5  (latest year, capped at 10)
-      B = (burden% - 50) / 4  (latest year, capped at 10)
-      C = burden_shift × 1.2  (2021→latest, capped at 10)
-      D = peak_inflation / 2  (any year, capped at 10)
-      Final = mean(A, B, C, D)
+    Components (burden-weighted — divergence alone understates risk because
+    shelter inflation pulls the headline above all groups after 2022):
+      A = (burden% - 55) / 2        (level: how squeezed right now)
+      B = burden_shift × 1.5        (trend: how fast it's getting worse)
+      C = peak_group_inflation / 1.5 (shock: worst single-year hit)
+      D = max_|divergence| × 2      (gap: worst year vs headline)
+      Final = mean(A, B, C, D), capped at 10
     """
     components = {}
-    latest = di_df[di_df["year"] == di_df["year"].max()]
-    row = latest[latest["group"] == group]
-    if not row.empty:
-        div = abs(row.iloc[0]["divergence"])
-        components["A: Divergence (|gap|×1.5)"] = (div, min(10, div * 1.5))
 
     b = burden_df[(burden_df["group"] == group) & (burden_df["year"] == burden_df["year"].max())]
     if not b.empty:
         nd = b.iloc[0]["nondiscretionary_pct"]
-        components["B: Burden level ((nd%-50)/4)"] = (nd, min(10, (nd - 50) / 4))
+        components["A: Burden level ((nd%-55)/2)"] = (nd, min(10, max(0, (nd - 55) / 2)))
 
     b21 = burden_df[(burden_df["group"] == group) & (burden_df["year"] == 2021)]
     if not b.empty and not b21.empty:
         shift = b.iloc[0]["nondiscretionary_pct"] - b21.iloc[0]["nondiscretionary_pct"]
-        components["C: Burden shift (Δpp×1.2)"] = (shift, min(10, shift * 1.2))
+        components["B: Burden shift (Δpp×1.5)"] = (shift, min(10, shift * 1.5))
 
-    peak = di_df[di_df["group"] == group]["group_inflation"].max() if len(di_df[di_df["group"] == group]) > 0 else 0
-    components["D: Peak inflation (peak/2)"] = (peak, min(10, peak / 2))
+    gdf = di_df[di_df["group"] == group]
+    peak = gdf["group_inflation"].max() if len(gdf) > 0 else 0
+    components["C: Peak inflation (peak/1.5)"] = (peak, min(10, peak / 1.5))
+
+    max_div = gdf["divergence"].abs().max() if len(gdf) > 0 else 0
+    components["D: Max divergence (|gap|×2)"] = (max_div, min(10, max_div * 2))
 
     scores = [v for _, v in components.values()]
-    final = round(np.mean(scores), 1) if scores else 5.0
+    final = round(min(10, np.mean(scores)), 1) if scores else 5.0
     if detail:
         return final, components
     return final
@@ -414,11 +414,13 @@ with tab1:
             '<div class="explanation">'
             "<b>Deliverable 1: Personalized Inflation Rates.</b> "
             "CPI is one number for everyone — but a retiree spending 16% on medical care, "
-            "a renter paying 28% on housing, and a farmer spending 10% on gasoline experience very different price pressures. "
+            "a renter paying 31% on housing, and a farmer spending 10% on gasoline experience very different price pressures. "
             "We calculate a <b>weighted inflation rate</b> for three groups using real BLS CPI sub-indices "
             "and expenditure weights from the Consumer Expenditure Survey. "
-            "The biggest divergence came in 2022 (+6.5pp for Rural Biz). Cumulatively, all groups end up near the CPI total — "
-            "but <b>the real story is prices vs. income</b> (see Spending Squeeze tab). "
+            "The biggest divergence came in 2022 (+2.9pp for Rural Biz, driven by energy spikes). "
+            "Cumulatively, groups land 1-1.5pp below the headline — shelter dominates the CPI basket (~36%) "
+            "more than any single group's budget, pulling the headline above individual experience. "
+            "But <b>the real story is prices vs. income</b> (see Spending Squeeze tab). "
             "Benchmark: CPI-U, Midwest Urban (CUUR0200SA0)."
             "</div>", unsafe_allow_html=True,
         )
@@ -718,8 +720,9 @@ with tab4:
         st.markdown(
             '<div class="explanation">'
             "<b>Deliverable 2: Non-Discretionary Burden — Our Strongest Finding.</b> "
-            "Even though cumulative price inflation converges near the Midwest CPI average by 2025, "
-            "the real squeeze is <b>prices vs. income</b>. This shows what <b>% of income</b> goes to "
+            "All three groups saw cumulative inflation 1-1.5pp below the Midwest headline — "
+            "shelter (~36% of the CPI basket) rose +25% and pulls the headline up more than any single group's budget. "
+            "But the real squeeze is <b>prices vs. income</b>. This shows what <b>% of income</b> goes to "
             "essentials they MUST pay for (not to be confused with % of spending in the donut charts). "
             "Prices never came back down — they just stopped rising as fast. "
             "Meanwhile, Social Security COLAs for Seniors lagged behind in 2021-2022, and fixed pensions didn't adjust at all."
@@ -737,10 +740,10 @@ with tab4:
             textposition="top center", textfont=dict(size=11, color=COLORS[group]),
             hovertemplate="%{y:.1f}% of income<extra>" + SHORT[group] + "</extra>",
         ))
-    fig.add_hline(y=80, line_dash="dot", line_color="#E74C3C", line_width=2,
-                  annotation_text="Danger zone (80%+)", annotation_position="bottom right",
+    fig.add_hline(y=75, line_dash="dot", line_color="#E74C3C", line_width=2,
+                  annotation_text="Severe burden (75%+)", annotation_position="bottom right",
                   annotation_font=dict(size=11, color="#E74C3C"))
-    fig.add_hrect(y0=80, y1=95, fillcolor="rgba(231,76,60,0.04)", line_width=0)
+    fig.add_hrect(y0=75, y1=92, fillcolor="rgba(231,76,60,0.04)", line_width=0)
     if show_events:
         add_timeline_annotations(fig, range(start_yr, end_yr + 1))
     fig = styled(fig, h=500)
@@ -765,7 +768,7 @@ with tab4:
             <div class="kpi-card" style="border-left: 4px solid {color};">
                 <div class="label">{SHORT[group]}</div>
                 <div class="value" style="color: {color};">${remaining_dollars:,.0f}/yr</div>
-                <div class="delta neutral">{remaining_pct:.0f}% of income left after essentials</div>
+                <div class="delta neutral">{remaining_pct:.0f}% of {int(r25["year"])} income left after essentials</div>
                 <div class="delta pos" style="margin-top:4px;">burden +{shift:.1f}pp since 2021</div>
             </div>'''
     money_html += '</div>'
@@ -943,10 +946,10 @@ with tab6:
     st.markdown(
         '<div class="data-source">'
         "Each cell shows <b>raw input → sub-score (0-10)</b>. "
-        "A: |latest year divergence| × 1.5 &nbsp;|&nbsp; "
-        "B: (burden% − 50) ÷ 4 &nbsp;|&nbsp; "
-        "C: burden shift (pp) × 1.2 &nbsp;|&nbsp; "
-        "D: peak YoY inflation ÷ 2. "
+        "A: (burden% − 55) ÷ 2 &nbsp;|&nbsp; "
+        "B: burden shift (pp) × 1.5 &nbsp;|&nbsp; "
+        "C: peak YoY inflation ÷ 1.5 &nbsp;|&nbsp; "
+        "D: max |divergence any year| × 2. "
         "All capped at 10. Final = mean(A,B,C,D)."
         "</div>", unsafe_allow_html=True,
     )
@@ -1038,7 +1041,7 @@ with tab7:
             | Group | Their Problem | Product Solution |
             |-------|--------------|-----------------|
             | **Seniors** | Medical = 16% of spending | Inflation-indexed CDs; prescription financing |
-            | **Renters** | Rent = 28% of spending | Rent-smoothing accounts; homebuyer programs |
+            | **Renters** | Rent = 31% of spending | Rent-smoothing accounts; homebuyer programs |
             | **Rural Biz** | Gasoline spiked +32% in 2022 | Energy hedging; seasonal payment schedules |
 
             **Pillar 3 — Stop the deposit bleeding ($150M lost)**
@@ -1058,7 +1061,7 @@ with tab7:
             |-------------|----------|-------------|
             | **Crossroads Exec Team** | Deposit retention, loan quality | Balancing growth with risk in inflation-stressed portfolios |
             | **Fixed-Income Seniors** | Predictable returns, affordable healthcare | Erosion of purchasing power on fixed pensions; COLAs lag real costs |
-            | **Urban Renters** | Housing affordability, credit access | Rent consuming 27% of income; limited savings for emergencies |
+            | **Urban Renters** | Housing affordability, credit access | Rent consuming 31% of spending; limited savings for emergencies |
             | **Rural Small Biz Owners** | Operating cost stability, credit lines | Gasoline/vehicle costs volatile; seasonal cash-flow gaps |
             | **Regulators / Policymakers** | Fair lending, community reinvestment | ECOA compliance; equitable access across demographics |
             """)
@@ -1120,7 +1123,7 @@ with tab8:
             <p style="font-size:16px; line-height:1.7;">
             The Midwest CPI says inflation was <b>+8.0% in 2022</b>. But that's an <i>average</i>
             across all Midwest urban consumers. A 70-year-old retiree spending 16% on medical care
-            experiences a completely different inflation rate than a 25-year-old renter spending 27% on rent.
+            experiences a completely different inflation rate than a 25-year-old renter spending 31% on rent.
             </p>
             <p style="font-size:16px; line-height:1.7;">
             <b>The Divergence Index</b> calculates a personalized inflation rate for each demographic group,
@@ -1136,9 +1139,9 @@ with tab8:
         </div>''', unsafe_allow_html=True)
         g_cols = st.columns(3)
         for i, (group, details) in enumerate([
-            ("Fixed-Income Seniors", "Median income: $37K | Top expense: Home ownership (19%), Medical care (16%) | Fixed pensions, Social Security"),
-            ("Urban Renters", "Median income: $48K | Top expense: Rent (27%) | Young professionals, student loans"),
-            ("Rural Small Business Owners", "Median income: $60.5K | Top expenses: Home ownership (19%), New vehicles (12%), Gasoline (10%) | Equipment, trucks, diesel"),
+            ("Fixed-Income Seniors", "Median income: $37K | Top expense: Home ownership (26%), Medical care (16%) | Fixed pensions, Social Security"),
+            ("Urban Renters", "Median income: $48K | Top expense: Rent (31%) | Young professionals, student loans"),
+            ("Rural Small Business Owners", "Median income: $60.5K | Top expenses: Home ownership (24%), Gasoline (10%), New vehicles (10%) | Equipment, trucks, diesel"),
         ]):
             with g_cols[i]:
                 st.markdown(f'<div class="kpi-card" style="border-left:4px solid {COLORS[group]};"><div class="label" style="color:{COLORS[group]}; font-size:15px;">{SHORT[group]}</div><p style="margin-top:8px; font-size:13px; line-height:1.6;">{details}</p></div>', unsafe_allow_html=True)
@@ -1161,7 +1164,7 @@ with tab8:
                                      marker=dict(size=10, symbol="diamond"),
                                      text=[f"{v:+.1f}%" for v in gdf["group_inflation"]],
                                      textposition="top center", textfont=dict(size=11, color=COLORS[group])))
-        fig.add_annotation(x=2022, y=11.1, text="Rural Biz: +11.1%<br>(energy crisis)",
+        fig.add_annotation(x=2022, y=10.9, text="Rural Biz: +10.9%<br>(energy crisis)",
                           showarrow=True, arrowhead=2, ax=-80, ay=-30,
                           bgcolor="rgba(39,174,96,0.1)", bordercolor="#27AE60", font=dict(size=11, color="#27AE60"))
         fig = styled(fig, h=450)

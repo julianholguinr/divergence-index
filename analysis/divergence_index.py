@@ -100,36 +100,47 @@ def calculate_cumulative_inflation(
     weights: dict[str, dict[str, float]],
     base_year: int = 2021,
 ) -> pd.DataFrame:
-    """Calculate cumulative inflation from base year for each group.
+    """Calculate cumulative inflation by compounding weighted YoY rates.
 
-    Shows total price increase experienced since the base year.
+    This matches the YoY rates displayed on the chart: for each year we
+    compute the weighted group inflation rate, then compound across years.
     """
+    cpi_changes = calculate_yoy_changes(cpi_df)
     results = []
 
     for group_name, group_weights in weights.items():
+        cumulative_factor = 1.0
+
         for year in cpi_df.index:
             if year < base_year:
                 continue
 
-            cumulative = 0.0
-            total_weight = 0.0
+            if year == base_year:
+                results.append({
+                    "year": year,
+                    "group": group_name,
+                    "cumulative_inflation": 0.0,
+                })
+                continue
 
+            yoy_rate = 0.0
+            total_weight = 0.0
             for category, weight in group_weights.items():
-                if category in cpi_df.columns:
-                    base_val = cpi_df.loc[base_year, category] if base_year in cpi_df.index else np.nan
-                    curr_val = cpi_df.loc[year, category]
-                    if pd.notna(base_val) and pd.notna(curr_val) and base_val > 0:
-                        cat_cumulative = ((curr_val - base_val) / base_val) * 100
-                        cumulative += weight * cat_cumulative
+                if category in cpi_changes.columns and year in cpi_changes.index:
+                    cat_change = cpi_changes.loc[year, category]
+                    if pd.notna(cat_change):
+                        yoy_rate += weight * cat_change
                         total_weight += weight
 
             if total_weight > 0 and total_weight < 0.95:
-                cumulative = cumulative / total_weight
+                yoy_rate = yoy_rate / total_weight
+
+            cumulative_factor *= (1 + yoy_rate / 100)
 
             results.append({
                 "year": year,
                 "group": group_name,
-                "cumulative_inflation": round(cumulative, 2),
+                "cumulative_inflation": round((cumulative_factor - 1) * 100, 2),
             })
 
     return pd.DataFrame(results)
